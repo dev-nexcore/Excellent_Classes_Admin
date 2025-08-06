@@ -68,7 +68,7 @@ const Login = () => {
             />
 
             {/* Forgot Password Link */}
-            <div className="flex justify-end text-sm text-[#1D3561] hover:underline">
+            <div className="flex justify-end text-sm text-black hover:underline">
               <a href="#">Forgot Password ?</a>
             </div>
 
