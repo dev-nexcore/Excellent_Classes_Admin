@@ -69,7 +69,7 @@ const Login = () => {
 
             {/* Forgot Password Link */}
             <div className="flex justify-end text-sm text-black hover:underline">
-              <a href="#">Forgot Password ?</a>
+              <a href="/forgetpassword">Forgot Password ?</a>
             </div>
 
             {/* Button Wrapper to Center the Button */}
