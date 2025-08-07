@@ -5,7 +5,7 @@ import Image from "next/image";
 
 export default function Navbar({ onSidebarToggle }) {
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white h-16 flex items-center justify-between px-4 md:pl-[15rem]">
+    <header className="fixed top-0 left-0 right-0 z-40 bg-[#F4F9FF] h-16 flex items-center justify-between px-4 md:pl-[15rem]">
       {/* Sidebar toggle for mobile */}
       <button
         onClick={onSidebarToggle}
