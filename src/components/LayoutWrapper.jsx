@@ -15,7 +15,7 @@ const LayoutWrapper = ({children}) => {
   return (
    <>
    {hideLayout ? (children) : (
-    <div className='min-h-screen bg-white'>
+    <div className='min-h-screen bg-[#F4F9FF]'>
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}/>
 
         <div className={`md:ml-60 min-h-screen flex flex-col transition-all duration-300 ${sidebarOpen ? 'md:ml-60' : ''}`}>
