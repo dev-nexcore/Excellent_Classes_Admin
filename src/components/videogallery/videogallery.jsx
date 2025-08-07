@@ -5,8 +5,8 @@ import { Trash2 } from 'lucide-react';
 export default function VideoGallery() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [videos, setVideos] = useState([
-    { id: 1, thumbnail: null },
-    { id: 2, thumbnail: null }
+    { id: 1, thumbnail: null, file: null },
+    { id: 2, thumbnail: null, file: null }
   ]);
 
   const handleFileChange = (event) => {
@@ -16,8 +16,17 @@ export default function VideoGallery() {
 
   const handleSubmit = () => {
     if (selectedFile) {
-      // Add logic to handle video upload
-      console.log('Submitting video:', selectedFile);
+      // Create a new video object with unique ID
+      const newVideo = {
+        id: videos.length + 1,
+        thumbnail: URL.createObjectURL(selectedFile),
+        file: selectedFile,
+        name: selectedFile.name
+      };
+      
+      // Add new video to the list
+      setVideos([...videos, newVideo]);
+      
       // Reset file input
       setSelectedFile(null);
       document.getElementById('video-upload').value = '';
@@ -28,19 +37,24 @@ export default function VideoGallery() {
     setVideos(videos.filter(video => video.id !== videoId));
   };
 
+  const handleClearSelectedFile = () => {
+    setSelectedFile(null);
+    document.getElementById('video-upload').value = '';
+  };
+
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1 p-4 sm:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Video Gallery</h1>
-        
+      <div className="mb-10 sm:mb-12">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8">Video Gallery</h1>
+       
         {/* Add New Video Section */}
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Video</h2>
-          
-          <div className="flex items-center gap-4">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4">Add New Video</h2>
+         
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {/* File Upload */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <input
                 id="video-upload"
                 type="file"
@@ -48,20 +62,31 @@ export default function VideoGallery() {
                 onChange={handleFileChange}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <div className="bg-gray-200 border border-gray-300 rounded-lg px-6 py-3 text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors min-w-[200px]">
-                {selectedFile ? selectedFile.name : 'Choose File    No File chosen'}
-              </div>
-            </div>
+              <div className="flex items-center bg-[#D9D9D9] text-black rounded-md border-2 border-[#877575] px-4 py-2 cursor-pointer shadow-[0px_4.44px_4.44px_0px_#00000040]">
+            <span className="bg-white text-black px-2 py-1 rounded mr-3 text-sm shadow-[0px_4.44px_4.44px_0px_#00000040]">
+              Choose File
+            </span>
+            <span className="text-sm">No File chosen</span>
+          </div>
+        </div>
 
             {/* Delete Icon */}
-            <button className="p-2 text-gray-500 hover:text-red-500 transition-colors cursor-pointer">
-              <Trash2 size={20} />
+            <button 
+              onClick={handleClearSelectedFile}
+              className="p-2 text-black hover:text-red-500 transition-colors cursor-pointer"
+            >
+              <Trash2 size={24} />
             </button>
 
             {/* Submit Button */}
             <button
               onClick={handleSubmit}
-              className="bg-[#1F2A44] text-white ml-26 px-8 py-3 rounded-lg font-medium hover:bg-[#163258] transition-colors cursor-pointer"
+              disabled={!selectedFile}
+              className={`px-6 sm:px-8 py-3 sm:ml-20 rounded-lg font-medium transition-colors cursor-pointer text-sm sm:text-base w-full sm:w-auto ${
+                selectedFile 
+                  ? 'bg-[#1F2A44] text-white hover:bg-[#163258]' 
+                  : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+              }`}
             >
               SUBMIT
             </button>
@@ -70,19 +95,31 @@ export default function VideoGallery() {
       </div>
 
       {/* Video Grid */}
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {videos.map((video) => (
-          <div key={video.id} className="flex flex-col mt-8">
+          <div key={video.id} className="flex flex-col">
             {/* Video Thumbnail */}
-            <div className="bg-[#D9D9D9] shadow-sm h-[20vw]">
-              {/* Placeholder for video thumbnail */}
-              {/* <div className="w-full h-full bg-gray-300 rounded-lg"></div> */}
+            <div className="bg-[#D9D9D9] shadow-sm aspect-video w-full sm:h-[20vw] h-[24vh] relative overflow-hidden rounded-lg">
+              {video.thumbnail ? (
+                <video 
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                >
+                  <source src={video.thumbnail} type={video.file?.type} />
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+                  
+                </div>
+              )}
             </div>
-            
+           
             {/* Delete Button - Outside the box */}
             <button
               onClick={() => handleDelete(video.id)}
-              className="cursor-pointer text-[#C70000] font-medium transition-colors text-md mt-2 text-left"
+              className="cursor-pointer text-[#C70000] font-medium transition-colors text-sm sm:text-base mt-2 text-left hover:text-red-700"
             >
               Delete
             </button>
