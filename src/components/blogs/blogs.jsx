@@ -18,7 +18,7 @@ const AddBlogPage = () => {
   };
 
   return (
-    <div className="bg-[#f0f6ff] min-h-screen px-4 py-8">
+    <div className="bg-[#F4F9FF] min-h-screen px-4 py-8">
       <h2 className="text-2xl font-bold text-[#1F2A44] mb-4">Add New Blog</h2>
 
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
@@ -39,7 +39,7 @@ const AddBlogPage = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-8 mb-6">
-          <div className="w-[150px]">
+          <div className="w-[150px] mr-30">
             <label className="block mb-2 text-base font-semibold text-black">
               Date :
             </label>
