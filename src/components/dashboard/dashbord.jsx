@@ -52,15 +52,15 @@ const Dashboard = () => {
           ].map((item, index) => (
             <div
               key={index}
-              className="bg-[#E85222] text-white rounded-md py-6 w-[200px] sm:w-[180px] text-center shadow-[0px_4px_4px_0px_#00000040]"
+              className="bg-[#E85222] text-white rounded-md py-6 w-[160px] sm:w-[180px] md:w-[200px] lg:w-[160px] text-center shadow-[0px_4px_4px_0px_#00000040]"
             >
               {/* Custom count size */}
-              <div className="text-[36px] sm:text-[44px] font-medium">
+              <div className="text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] font-medium">
                 {item.count}
               </div>
 
               {/* Custom label size */}
-              <div className="font-medium text-[12px] sm:text-[18px]">
+              <div className="font-medium text-[10px] sm:text-[12px] md:text-[18px] lg:text-[15px]">
                 {item.label}
               </div>
             </div>
