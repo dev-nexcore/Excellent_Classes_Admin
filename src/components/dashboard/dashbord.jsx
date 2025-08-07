@@ -35,7 +35,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#edf1f7] text-[#333] p-4 sm:p-6 font-poppins">
+    <div className="min-h-screen  bg-[#F4F9FF] text-[#333] p-4 sm:p-6 font-poppins">
       {/* Dashboard Section */}
       <div className="max-w-[900px] mx-auto px-4 sm:px-6">
         <h1 className="mb-6 font-bold text-[30px] sm:text-[35px] leading-none tracking-normal text-[#1F2A44]">
