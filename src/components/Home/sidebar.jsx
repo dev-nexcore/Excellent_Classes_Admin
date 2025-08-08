@@ -36,10 +36,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const getLinkClass = (href, label) =>
-    `flex items-center gap-3 px-4 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer
+    `flex items-center gap-3 pl-4 pr-0 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer
     ${
       active === label || pathname === href
-        ? "bg-[#BAC7E5] text-[#1F2A44] rounded-lg mx-2 shadow-sm mb-1"
+        ? "bg-[#BAC7E5] text-[#1F2A44] rounded-lg ml-2 shadow-sm mb-1"
         : "text-yellow-400 hover:bg-white/20"
     }`;
 
