@@ -60,7 +60,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Logo */}
         <div className="flex justify-center items-center mb-12 mt-6">
-          <img src="/images/logo.png" alt="Logo" className="w-44 h-auto" />
+          <img src="/images/exlogo.png" alt="Logo" className="w-44 h-auto" />
         </div>
 
         {/* Nav Items */}

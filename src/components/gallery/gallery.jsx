@@ -12,6 +12,8 @@ const Gallery = () => {
     "/images/img1.png",
     "/images/img1.png",
   ]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState("No File chosen");
 
   const handleDelete = (index) => {
     const newImages = [...images];
@@ -20,7 +22,43 @@ const Gallery = () => {
   };
 
   const handleFileChange = (e) => {
-    console.log("Selected file:", e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setSelectedFileName(file.name);
+    } else {
+      setSelectedFile(null);
+      setSelectedFileName("No File chosen");
+    }
+  };
+
+  const handleSubmit = () => {
+    if (selectedFile) {
+      // Create a URL for the selected file to display it
+      const fileURL = URL.createObjectURL(selectedFile);
+      setImages([...images, fileURL]);
+      
+      // Reset the file input
+      setSelectedFile(null);
+      setSelectedFileName("No File chosen");
+      
+      // Reset the file input element
+      const fileInput = document.getElementById('file-upload');
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    }
+  };
+
+  const handleClearSelectedFile = () => {
+    setSelectedFile(null);
+    setSelectedFileName("No File chosen");
+    
+    // Reset the file input element
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+      fileInput.value = '';
+    }
   };
 
   return (
@@ -40,26 +78,36 @@ const Gallery = () => {
           <input
             type="file"
             id="file-upload"
+            accept="image/*"
             onChange={handleFileChange}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div className="flex items-center bg-[#D9D9D9] text-black rounded-md border-2 border-[#877575] px-4 py-2 cursor-pointer shadow-[0px_4.44px_4.44px_0px_#00000040]">
-            <span className="bg-white text-black px-2 py-1 rounded mr-3 text-sm shadow-[0px_4.44px_4.44px_0px_#00000040]">
+            <span className="bg-white text-black px-2 py-1 rounded mr-3 text-sm shadow-[0px_4.44px_4.44px_0px_#00000040] ">
               Choose File
             </span>
-            <span className="text-sm">No File chosen</span>
+            <span className="text-sm">{selectedFileName}</span>
           </div>
         </div>
 
         {/* Delete Icon */}
         <img
           src="/images/delete.png"
-          alt="Delete"
-          className="w-6 h-6 cursor-pointer ml-4"
+          alt="Clear Selected File"
+          onClick={handleClearSelectedFile}
+          className="w-6 h-6 cursor-pointer ml-4 hover:opacity-70 transition-opacity"
         />
 
         {/* Submit Button */}
-        <button className="bg-[#1f2a44]  text-white px-5 py-2 border border-white rounded-[9.7px] sm:ml-10 hover:bg-[#1b243b] transition-all">
+        <button 
+          onClick={handleSubmit}
+          disabled={!selectedFile}
+          className={`px-5 py-2 border border-white rounded-[9.7px] sm:ml-10 transition-all ${
+            selectedFile 
+              ? 'bg-[#1f2a44] text-white hover:bg-[#1b243b] cursor-pointer' 
+              : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+          }`}
+        >
           SUBMIT
         </button>
       </div>
