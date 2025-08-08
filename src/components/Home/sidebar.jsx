@@ -12,6 +12,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const [active, setActive] = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showLoggedOut, setShowLoggedOut] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { label: "Dashboard", icon: "/images/dashboard.png", href: "/dashboard" },
@@ -35,13 +40,19 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     router.push("/");
   };
 
-  const getLinkClass = (href, label) =>
-    `flex items-center gap-3 pl-4 pr-0 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer
+  const getLinkClass = (href, label) => {
+    // Ensure consistent rendering during hydration
+    if (!mounted) {
+      return "flex items-center gap-3 px-4 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer text-yellow-400";
+    }
+    
+    return `flex items-center gap-3 px-4 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer
     ${
       active === label || pathname === href
         ? "bg-[#BAC7E5] text-[#1F2A44] rounded-lg ml-2 shadow-sm mb-1"
         : "text-yellow-400 hover:bg-white/20"
     }`;
+  };
 
   return (
     <>
@@ -76,6 +87,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       setSidebarOpen(false);
                       setShowLogoutConfirm(true);
                     }}
+                    suppressHydrationWarning={true}
                   >
                     <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
                     <span>{item.label}</span>
@@ -88,6 +100,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                         setActive(item.label);
                         setSidebarOpen(false);
                       }}
+                      suppressHydrationWarning={true}
                     >
                       <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
                       <span>{item.label}</span>
