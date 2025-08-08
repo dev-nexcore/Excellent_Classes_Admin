@@ -22,19 +22,77 @@ const AddBlogPage = () => {
 
   // Save blogs to localStorage whenever blogs array changes
   useEffect(() => {
-    localStorage.setItem("blogs", JSON.stringify(blogs));
+    try {
+      const blogsData = JSON.stringify(blogs);
+      
+      // Check if the data size is reasonable (less than 4MB to leave room for other data)
+      const sizeInMB = new Blob([blogsData]).size / (1024 * 1024);
+      
+      if (sizeInMB > 4) {
+        alert("Storage limit approaching. Consider removing some blog images or older posts.");
+        return;
+      }
+      
+      localStorage.setItem("blogs", blogsData);
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        alert("Storage quota exceeded! Please remove some blog posts or images to free up space.");
+        console.error("LocalStorage quota exceeded:", error);
+      } else {
+        console.error("Error saving blogs:", error);
+      }
+    }
   }, [blogs]);
 
-  const handleImageChange = (e) => {
+  // Function to compress image
+  const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
+      
+      try {
+        // Compress image if it's larger than 500KB
+        let processedFile = file;
+        if (file.size > 500 * 1024) {
+          processedFile = await compressImage(file);
+        }
+        
+        // Create preview URL
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(processedFile);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        // Fallback to original file
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -113,6 +171,27 @@ const AddBlogPage = () => {
     setImagePreview(null);
     const fileInput = document.getElementById("file-upload");
     if (fileInput) fileInput.value = "";
+  };
+
+  // Function to get storage usage
+  const getStorageUsage = () => {
+    try {
+      const blogsData = localStorage.getItem("blogs") || "[]";
+      const sizeInBytes = new Blob([blogsData]).size;
+      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+      return { sizeInMB, sizeInBytes };
+    } catch (error) {
+      return { sizeInMB: "0", sizeInBytes: 0 };
+    }
+  };
+
+  // Function to clear all blogs
+  const clearAllBlogs = () => {
+    if (window.confirm("Are you sure you want to delete ALL blogs? This action cannot be undone.")) {
+      setBlogs([]);
+      localStorage.removeItem("blogs");
+      alert("All blogs have been cleared.");
+    }
   };
 
   return (
