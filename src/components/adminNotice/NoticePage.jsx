@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import EditActivity from "./EditActivity";
+import axios from "axios";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -28,25 +29,12 @@ const NoticePage = () => {
     setLoading(true);
     setError("");
     try {
-      // Simulated static data
-      setNotices([
-        {
-          user: "admin1@.com",
-          description: 'Added a new notice:\n"Final Exam Timetable"',
-          date: "2025-06-19",
-        },
-        {
-          user: "admin2@.com",
-          description: 'Deleted the notice:\n"Old Timetable Notice"',
-          date: "2025-06-15",
-        },
-        {
-          user: "admin3@.com",
-          description: 'Updated the notice:\n"Library Closed on Friday"',
-          date: "2025-06-12",
-        },
-      ]);
-    } catch {
+      const res = await axios.get("http://localhost:5000/api/admin/notices");
+
+      // Assuming API returns an array of notices
+      setNotices(res.data);
+    } catch (err) {
+      console.error("Error fetching notices:", err);
       setError("Failed to fetch notices.");
     } finally {
       setLoading(false);
