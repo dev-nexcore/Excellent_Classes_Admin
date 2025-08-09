@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
@@ -12,6 +11,40 @@ const AddBlogPage = () => {
   const [editingId, setEditingId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const dateInputRef = useRef(null);
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
+  const [lightboxAlt, setLightboxAlt] = useState("");
+
+  const openLightbox = (src, alt) => {
+    setLightboxSrc(src);
+    setLightboxAlt(alt);
+    setLightboxOpen(true);
+  };
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+    setLightboxSrc(null);
+    setLightboxAlt("");
+  };
+
+  // Prevent body scroll and close on Escape when lightbox is open
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const onKey = (e) => {
+      if (e.key === "Escape") closeLightbox();
+    };
+    document.addEventListener("keydown", onKey);
+
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [lightboxOpen]);
 
   // Load blogs from localStorage on component mount
   // useEffect(() => {
@@ -26,16 +59,50 @@ const AddBlogPage = () => {
   //   localStorage.setItem("blogs", JSON.stringify(blogs));
   // }, [blogs]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
+  // Function to compress image
+  const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => {
+        if (!ctx) return resolve(null);
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, "image/jpeg", quality);
+      };
+
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files?.[0];
     if (file) {
       setImage(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        let processedFile = file;
+        if (file.size > 500 * 1024) {
+          const compressed = await compressImage(file);
+          processedFile = compressed || file;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreview(ev.target?.result);
+        };
+        reader.readAsDataURL(processedFile);
+      } catch (error) {
+        console.error("Error processing image:", error);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreview(ev.target?.result);
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
@@ -75,7 +142,6 @@ const handleSubmit = async (e) => {
     // Update local state
     setBlogs((prevBlogs) => [newBlog, ...prevBlogs]);
 
-    // Reset form
     setTitle("");
     setDate("");
     setImage(null);
@@ -156,8 +222,6 @@ const handleDelete = async (id) => {
     setContent("");
     setImagePreview(null);
     setEditingId(null);
-
-    // Reset file input
     const fileInput = document.getElementById("file-upload");
     if (fileInput) fileInput.value = "";
   };
@@ -169,202 +233,269 @@ const handleDelete = async (id) => {
     if (fileInput) fileInput.value = "";
   };
 
+  // Optional helpers (not displayed, kept from your code)
+  const getStorageUsage = () => {
+    try {
+      const blogsData = localStorage.getItem("blogs") || "[]";
+      const sizeInBytes = new Blob([blogsData]).size;
+      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
+      return { sizeInMB, sizeInBytes };
+    } catch (error) {
+      return { sizeInMB: "0", sizeInBytes: 0 };
+    }
+  };
+
+  const clearAllBlogs = () => {
+    if (
+      window.confirm(
+        "Are you sure you want to delete ALL blogs? This action cannot be undone."
+      )
+    ) {
+      setBlogs([]);
+      localStorage.removeItem("blogs");
+      alert("All blogs have been cleared.");
+    }
+  };
+
   return (
-    <div className="bg-[#F4F9FF] min-h-screen px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2A44] mb-4 sm:mb-6 md:mb-8 lg:mb-12">
-        {editingId ? "Edit Blog" : "Add New Blog"}
-      </h2> 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto md:mx-auto lg:ml-6 xl:ml-10 lg:mx-0"
-      >
-        <div className="w-full md:w-full lg:w-[900px] xl:w-[1000px]">
-          <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
-            Title :
-          </label>
-          <div className="bg-white rounded-md px-3 sm:px-4 py-2 shadow-[0px_4px_4px_0px_#00000040] mb-4 sm:mb-6">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter Blog Title"
-              className="w-full outline-none text-gray-700 placeholder:text-gray-400 bg-transparent text-sm sm:text-base"
-              style={{ WebkitAppearance: "none" }}
-              required
-            />
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row md:flex-row sm:items-start lg:items-center gap-4 sm:gap-6 md:gap-6 lg:gap-8 mb-4 sm:mb-6">
-          <div className="w-full sm:w-auto md:w-auto sm:min-w-[150px] md:min-w-[150px] lg:mr-20">
+    <>
+      <div className="bg-[#F4F9FF] min-h-screen px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-[#1F2A44] mb-4 sm:mb-6 md:mb-8 lg:mb-12">
+          {editingId ? "Edit Blog" : "Add New Blog"}
+        </h2>
+
+        <form
+          onSubmit={handleSubmit}
+          className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto md:mx-auto lg:ml-6 xl:ml-10 lg:mx-0"
+        >
+          <div className="w-full md:w-full lg:w-[900px] xl:w-[1000px]">
             <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
-              Date :
+              Title :
             </label>
-            <div className="relative">
-              {/* Hidden native input positioned to open below */}
+            <div className="bg-white rounded-md px-3 sm:px-4 py-2 shadow-[0px_4px_4px_0px_#00000040] mb-4 sm:mb-6">
               <input
-                ref={dateInputRef}
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="absolute top-full left-0 opacity-0 pointer-events-none z-10"
-                style={{ transform: "translateY(-10px)" }}
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter Blog Title"
+                className="w-full outline-none text-gray-700 placeholder:text-gray-400 bg-transparent text-sm sm:text-base"
+                style={{ WebkitAppearance: "none" }}
                 required
               />
-              {/* Custom calendar UI */}
-              <div
-                onClick={() =>
-                  dateInputRef.current?.showPicker?.() ||
-                  dateInputRef.current?.click()
-                }
-                className="flex items-center justify-between bg-white rounded-md px-2 py-2 shadow-[0px_4px_4px_0px_#00000040] cursor-pointer relative z-20 min-w-[140px] sm:min-w-[150px] md:min-w-[150px]"
-              >
-                <span className="text-xs sm:text-sm text-gray-700">
-                  {date
-                    ? new Date(date).toLocaleDateString("en-GB")
-                    : "DD/MM/YYYY"}
-                </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-row sm:items-start lg:items-center gap-4 sm:gap-6 md:gap-6 lg:gap-8 mb-4 sm:mb-6">
+            <div className="w-full sm:w-auto md:w-auto sm:min-w-[150px] md:min-w-[150px] lg:mr-20">
+              <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
+                Date :
+              </label>
+              <div className="relative">
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="absolute top-full left-0 opacity-0 pointer-events-none z-10"
+                  style={{ transform: "translateY(-10px)" }}
+                  required
+                />
+                <div
+                  onClick={() =>
+                    dateInputRef.current?.showPicker?.() ||
+                    dateInputRef.current?.click()
+                  }
+                  className="flex items-center justify-between bg-white rounded-md px-2 py-2 shadow-[0px_4px_4px_0px_#00000040] cursor-pointer relative z-20 min-w-[140px] sm:min-w-[150px] md:min-w-[150px]"
+                >
+                  <span className="text-xs sm:text-sm text-gray-700">
+                    {date
+                      ? new Date(date).toLocaleDateString("en-GB")
+                      : "DD/MM/YYYY"}
+                  </span>
+                  <img
+                    src="/images/cal.svg"
+                    alt="Calendar"
+                    className="w-5 h-5 sm:w-6 sm:h-6 ml-2"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="relative w-full sm:w-auto md:w-auto flex-1">
+              <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
+                Add Image :
+              </label>
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="relative flex-1 sm:flex-none md:flex-none">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="flex items-center bg-[#D9D9D9] text-black rounded-md border-2 border-[#877575] px-2 sm:px-4 py-2 cursor-pointer shadow-[0px_4.44px_4.44px_0px_#00000040] min-w-0">
+                    <span className="bg-white text-black px-2 py-1 rounded mr-2 sm:mr-3 text-xs sm:text-sm shadow-[0px_4.44px_4.44px_0px_#00000040] whitespace-nowrap">
+                      Choose File
+                    </span>
+                    <span className="text-xs sm:text-sm truncate">
+                      {image ? image.name : "No File chosen"}
+                    </span>
+                  </div>
+                </div>
                 <img
-                  src="/images/cal.svg"
-                  alt="Calendar"
-                  className="w-5 h-5 sm:w-6 sm:h-6 ml-2"
+                  src="/images/delete.png"
+                  alt="Delete"
+                  className="w-5 h-5 sm:w-6 sm:h-6 cursor-pointer flex-shrink-0"
+                  onClick={removeImage}
                 />
               </div>
             </div>
           </div>
 
-          <div className="relative w-full sm:w-auto md:w-auto flex-1">
+          <div className="mb-4 sm:mb-6 w-full md:w-full lg:w-[900px] xl:w-[1000px]">
             <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
-              Add Image :
+              Content :
             </label>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="relative flex-1 sm:flex-none md:flex-none">
-                <input
-                  type="file"
-                  id="file-upload"
-                  onChange={handleImageChange}
-                  accept="image/*"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div className="flex items-center bg-[#D9D9D9] text-black rounded-md border-2 border-[#877575] px-2 sm:px-4 py-2 cursor-pointer shadow-[0px_4.44px_4.44px_0px_#00000040] min-w-0">
-                  <span className="bg-white text-black px-2 py-1 rounded mr-2 sm:mr-3 text-xs sm:text-sm shadow-[0px_4.44px_4.44px_0px_#00000040] whitespace-nowrap">
-                    Choose File
-                  </span>
-                  <span className="text-xs sm:text-sm truncate">
-                    {image ? image.name : "No File chosen"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Delete Icon */}
-              <img
-                src="/images/delete.png"
-                alt="Delete"
-                className="w-5 h-5 sm:w-6 sm:h-6 cursor-pointer flex-shrink-0"
-                onClick={removeImage}
+            <div className="bg-white rounded-lg shadow-[0_2px_4px_0px_rgba(0,0,0,0.2)] p-2">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write your blog content here"
+                className="w-full h-48 sm:h-60 md:h-72 resize-none outline-none text-gray-700 placeholder:text-gray-500 bg-transparent px-2 py-1 text-xs sm:text-sm"
+                required
               />
             </div>
           </div>
-        </div>
-        <div className="mb-4 sm:mb-6 w-full md:w-full lg:w-[900px] xl:w-[1000px]">
-          <label className="block mb-2 text-sm sm:text-base font-semibold text-black">
-            Content :
-          </label>
-          <div className="bg-white rounded-lg shadow-[0_2px_4px_0px_rgba(0,0,0,0.2)] p-2">
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Write your blog content here"
-              className="w-full h-48 sm:h-60 md:h-72 resize-none outline-none text-gray-700 placeholder:text-gray-500 bg-transparent px-2 py-1 text-xs sm:text-sm"
-              required
-            />
-          </div>  
-        </div>
-        <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
-          <button
-            type="submit"
-            className="w-full sm:w-auto bg-[#1F2A44] text-white px-6 py-2 rounded-md hover:bg-[#162035] text-sm sm:text-base"
-          >
-            {editingId ? "UPDATE" : "SUBMIT"}
-          </button>
-          {editingId && (
+
+          <div className="w-full flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 mt-4 sm:mt-6">
             <button
-              type="button"
-              onClick={cancelEdit}
-              className="w-full sm:w-auto bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 text-sm sm:text-base"
+              type="submit"
+              className="w-full sm:w-auto bg-[#1F2A44] text-white px-6 py-2 rounded-md hover:bg-[#162035] text-sm sm:text-base"
             >
-              CANCEL
+              {editingId ? "UPDATE" : "SUBMIT"}
             </button>
-          )}
-        </div>
-      </form>
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="w-full sm:w-auto bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 text-sm sm:text-base"
+              >
+                CANCEL
+              </button>
+            )}
+          </div>
+        </form>
 
-      <div className="mt-6 sm:mt-8 md:mt-10">
-        <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F2A44] text-center mb-4">
-          Latest Blogs ({blogs.length})
-        </h3>
+        <div className="mt-6 sm:mt-8 md:mt-10">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F2A44] text-center mb-4">
+            {`Latest Blogs (${blogs.length})`}
+          </h3>
 
-        <div className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto md:mx-auto lg:ml-6 xl:ml-10 lg:mx-0">
-          {blogs.length === 0 ? (
-            <div className="bg-white p-6 sm:p-8 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 text-center rounded-lg shadow-md">
-              <p className="text-gray-500 text-base sm:text-lg">
-                No blogs available. Create your first blog!
-              </p>
-            </div>
-          ) : (
-            <div className="bg-[#1F2A44] text-white p-3 sm:p-4 md:p-6 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 space-y-8 sm:space-y-10 md:space-y-12">
-              {blogs.map((blog) => (
-                <div
-                  key={blog.id}
-                  className="border-b border-gray-600 pb-6 sm:pb-8 last:border-b-0"
-                >
-                  <div className="flex justify-start text-xs sm:text-sm mb-3 sm:mb-4">
-                    <span
-                      className="text-blue-300 cursor-pointer mr-2 hover:text-blue-200"
-                      onClick={() => handleEdit(blog)}
-                    >
-                      Edit
-                    </span>
-                    <span style={{ color: "#FFD700" }}>|</span>
-                    <span
-                      className="text-red-400 cursor-pointer ml-2 hover:text-red-300"
-                      onClick={() => handleDelete(blog.id)}
-                    >
-                      Delete
-                    </span>
-                  </div>
-
-                  {blog.image && (
-                    <div className="mb-3 sm:mb-4">
-                      <img
-                        src={blog.image}
-                        alt={blog.title}
-                        className="w-full max-w-full sm:max-w-md md:max-w-lg h-32 sm:h-40 md:h-48 object-cover rounded-md"
-                      />
+          <div className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto md:mx-auto lg:ml-6 xl:ml-10 lg:mx-0">
+            {blogs.length === 0 ? (
+              <div className="bg-white p-6 sm:p-8 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 text-center rounded-lg shadow-md">
+                <p className="text-gray-500 text-base sm:text-lg">
+                  No blogs available. Create your first blog!
+                </p>
+              </div>
+            ) : (
+              <div className="bg-[#1F2A44] text-white p-3 sm:p-4 md:p-6 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 space-y-8 sm:space-y-10 md:space-y-12">
+                {blogs.map((blog) => (
+                  <div
+                    key={blog.id}
+                    className="border-b border-gray-600 pb-6 sm:pb-8 last:border-b-0"
+                  >
+                    <div className="flex justify-start text-xs sm:text-sm mb-3 sm:mb-4">
+                      <span
+                        className="text-blue-300 cursor-pointer mr-2 hover:text-blue-200"
+                        onClick={() => handleEdit(blog)}
+                      >
+                        Edit
+                      </span>
+                      <span style={{ color: "#FFD700" }}>|</span>
+                      <span
+                        className="text-red-400 cursor-pointer ml-2 hover:text-red-300"
+                        onClick={() => handleDelete(blog.id)}
+                      >
+                        Delete
+                      </span>
                     </div>
-                  )}
 
-                  <p className="text-xs sm:text-sm text-gray-300">Uncategorized</p>
-                  <p className="text-sm sm:text-base md:text-lg font-medium underline text-white mt-1 break-words">
-                    {blog.title}
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-300 mt-1">
-                    Posted on{" "}
-                    <span className="text-blue-300">
-                      {new Date(blog.date).toLocaleDateString("en-GB")}
-                    </span>
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed break-words">
-                    {blog.content.length > 200
-                      ? `${blog.content.substring(0, 200)}...`
-                      : blog.content}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+                    {blog.image && (
+                      <div className="mb-3 sm:mb-4">
+                        <img
+                          src={blog.image || "/placeholder.svg"}
+                          alt={blog.title}
+                          className="w-full max-w-full sm:max-w-md md:max-w-lg h-32 sm:h-40 md:h-48 object-cover rounded-md cursor-zoom-in"
+                          onClick={() => openLightbox(blog.image, blog.title)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ")
+                              openLightbox(blog.image, blog.title);
+                          }}
+                          tabIndex={0}
+                        />
+                      </div>
+                    )}
+
+                    <p className="text-xs sm:text-sm text-gray-300">
+                      Uncategorized
+                    </p>
+                    <p className="text-sm sm:text-base md:text-lg font-medium underline text-white mt-1 break-words">
+                      {blog.title}
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-300 mt-1">
+                      Posted on{" "}
+                      <span className="text-blue-300">
+                        {new Date(blog.date).toLocaleDateString("en-GB")}
+                      </span>
+                    </p>
+                    <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed break-words">
+                      {blog.content.length > 200
+                        ? `${blog.content.substring(0, 200)}...`
+                        : blog.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {lightboxOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightboxAlt || "Image preview"}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-sm sm:backdrop-blur-md"
+          onClick={closeLightbox}
+        >
+          <div
+            className="relative max-w-[90vw] max-h-[85vh] p-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={closeLightbox}
+              aria-label="Close image preview"
+              className="absolute -top-3 -right-3 sm:-top-4 sm:-right-4 h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-white text-black shadow-md hover:shadow-lg focus:outline-none"
+              title="Close"
+            >
+              {"×"}
+            </button>
+
+            {lightboxSrc ? (
+              <img
+                src={lightboxSrc || "/placeholder.svg"}
+                alt={lightboxAlt}
+                className="block max-w-[90vw] max-h-[85vh] object-contain rounded-md"
+              />
+            ) : null}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

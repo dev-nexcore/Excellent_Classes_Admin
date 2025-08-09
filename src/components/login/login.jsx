@@ -38,7 +38,10 @@ const Login = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-[#233B77] overflow-hidden">
+    <div
+      className="h-screen w-screen flex items-center justify-center bg-[#233B77] overflow-hidden"
+      style={{ fontFamily: "Times New Roman, serif" }}
+    >
       {/* Desktop Layout */}
       <div className="hidden md:grid grid-cols-1 md:grid-cols-2 w-full h-full bg-white shadow-2xl overflow-hidden">
         {/* Left Section */}
@@ -70,9 +73,7 @@ const Login = () => {
             {/* Illustration */}
             <div
               className={`transition-all duration-700 delay-500 ease-out transform ${
-                mounted
-                  ? "scale-100 opacity-100"
-                  : "scale-90 opacity-0"
+                mounted ? "scale-100 opacity-100" : "scale-90 opacity-0"
               }`}
             >
               <Image
@@ -85,7 +86,7 @@ const Login = () => {
             </div>
             {/* Tagline */}
             <p
-              className={`text-[#E85222] font-times text-2xl text-center mt-4 transition-all duration-700 delay-700 ease-out ${
+              className={`text-[#E85222] text-2xl text-center mt-4 transition-all duration-700 delay-700 ease-out ${
                 mounted
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
@@ -165,7 +166,7 @@ const Login = () => {
                 <div className="text-right mt-2">
                   <a
                     href="/forgetpassword"
-                    className="text-[#E85222] text-sm font-medium hover:underline transition-colors duration-200"
+                    className="text-[#E85222] text-base font-medium hover:underline transition-colors duration-200"
                   >
                     {"Forgot Password ?"}
                   </a>
@@ -182,7 +183,7 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-[150px] bg-[#233B77] cursor-pointer text-white py-3 rounded-md hover:bg-[#16294A] transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 text-center disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-[150px] bg-[#233B77] cursor-pointer text-white py-3 rounded-md hover:bg-[#16294A] transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 text-center disabled:opacity-70 disabled:cursor-not-allowed shadow-[0px_5.75px_5.75px_0px_#00000040]"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">
@@ -250,7 +251,7 @@ const Login = () => {
               className="text-lg xs:text-xl sm:text-xl font-bold text-black bg-white text-center py-3 xs:py-4 m-0 rounded-t-[20px] rounded-b-[20px]"
               style={{
                 border: "0.5px solid #000000",
-                fontFamily: "Poppins",
+                fontFamily: "Times New Roman, serif",
                 fontWeight: "600",
               }}
             >
@@ -281,7 +282,7 @@ const Login = () => {
                   className="w-full px-3 xs:px-4 sm:px-5 py-2.5 xs:py-3 text-sm xs:text-base text-gray-800 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#233B77] placeholder:font-medium transition-all duration-300 ease-in-out transform focus:scale-[1.02] hover:shadow-lg"
                   style={{
                     boxShadow: "0px 4px 10px 0px #00000040",
-                    fontFamily: "Poppins, sans-serif",
+                    fontFamily: "Times New Roman, serif",
                     fontWeight: "500",
                   }}
                 />
@@ -300,7 +301,7 @@ const Login = () => {
                   className="w-full px-3 xs:px-4 sm:px-5 py-2.5 xs:py-3 text-sm xs:text-base text-gray-800 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#233B77] placeholder:font-medium transition-all duration-300 ease-in-out transform focus:scale-[1.02] hover:shadow-lg"
                   style={{
                     boxShadow: "0px 4px 10px 0px #00000040",
-                    fontFamily: "Poppins, sans-serif",
+                    fontFamily: "Times New Roman, serif",
                     fontWeight: "500",
                   }}
                 />
@@ -310,7 +311,7 @@ const Login = () => {
                     className="text-xs xs:text-sm font-semibold hover:underline transition-colors duration-200"
                     style={{
                       color: "#E85222",
-                      fontFamily: "Poppins, sans-serif",
+                      fontFamily: "Times New Roman, serif",
                       fontWeight: "600",
                     }}
                   >
@@ -345,14 +346,14 @@ const Login = () => {
             </form>
           </div>
         </div>
-        
+
         {/* Quote section positioned directly below the card */}
         <div
           className={`absolute top-[570px] xs:top-[620px] sm:top-[680px] md:top-[720px] w-[85%] xs:w-[80%] sm:w-[75%] md:w-9/12 max-w-[400px] z-10 transition-all duration-700 delay-600 ease-out ${
             mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
           }`}
         >
-          <p className="text-[#E85222] font-times text-sm xs:text-base sm:text-lg font-semibold text-center leading-relaxed">
+          <p className="text-[#E85222] text-sm xs:text-base sm:text-lg font-semibold text-center leading-relaxed">
             {"Please Login to manage the website."}
           </p>
         </div>

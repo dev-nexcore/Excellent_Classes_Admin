@@ -1,4 +1,47 @@
+"use client";
+
 import React from "react";
+
+function CountUp({
+  value,
+  durationMs = 1200,
+  start = 0,
+  format = (n) => n.toString(),
+}) {
+  const [display, setDisplay] = React.useState(start);
+
+  React.useEffect(() => {
+    const reduce =
+      typeof window !== "undefined" &&
+      "matchMedia" in window &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce) {
+      setDisplay(value);
+      return;
+    }
+
+    let raf = 0;
+    let t0 = null;
+
+    const step = (t) => {
+      if (t0 === null) t0 = t;
+      const elapsed = t - t0;
+      const progress = Math.min(elapsed / durationMs, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const current = Math.round(start + (value - start) * eased);
+      setDisplay(current);
+      if (progress < 1) {
+        raf = requestAnimationFrame(step);
+      }
+    };
+
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, durationMs, start]);
+
+  return <span aria-live="polite">{format(display)}</span>;
+}
 
 const Dashboard = () => {
   const recentActivities = [
@@ -41,7 +84,7 @@ const Dashboard = () => {
         <h1 className="mb-6 font-bold text-[30px] sm:text-[35px] leading-none tracking-normal text-[#1F2A44]">
           Dashboard
         </h1>
-        
+
         {/* Stats Cards */}
         <div className="flex flex-wrap justify-center sm:justify-between gap-4 sm:gap-0 mb-10">
           {[
@@ -55,7 +98,7 @@ const Dashboard = () => {
               className="bg-[#E85222] text-white rounded-md py-6 w-[180px] sm:w-[220px] md:w-[240px] lg:w-[240px] text-center shadow-[0px_4px_4px_0px_#00000040]"
             >
               <div className="text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] font-medium">
-                {item.count}
+                <CountUp value={item.count} />
               </div>
               <div className="font-medium text-[10px] sm:text-[12px] md:text-[18px] lg:text-[15px]">
                 {item.label}
@@ -79,7 +122,7 @@ const Dashboard = () => {
                 <th className="p-3 border-r border-black">User</th>
                 <th className="p-3 border-r border-black">Action</th>
                 <th className="p-3 border-r border-black">Section</th>
-                <th className="p-3">Date & Time</th>
+                <th className="p-3">Date &amp; Time</th>
               </tr>
             </thead>
             <tbody>
@@ -124,19 +167,13 @@ const Dashboard = () => {
                   {activity.section}
                 </span>
               </div>
-
               {/* Action */}
               <div className="mb-3">
-                <p className="text-gray-800 font-medium">
-                  {activity.action}
-                </p>
+                <p className="text-gray-800 font-medium">{activity.action}</p>
               </div>
-
               {/* Date & Time */}
               <div className="border-t border-gray-200 pt-2">
-                <p className="text-xs text-gray-500">
-                  {activity.datetime}
-                </p>
+                <p className="text-xs text-gray-500">{activity.datetime}</p>
               </div>
             </div>
           ))}
