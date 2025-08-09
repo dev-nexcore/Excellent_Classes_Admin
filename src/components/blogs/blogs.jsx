@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import axios from "axios";
 
 const AddBlogPage = () => {
   const [title, setTitle] = useState("");
@@ -26,6 +27,7 @@ const AddBlogPage = () => {
     setLightboxSrc(null);
     setLightboxAlt("");
   };
+  const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
 
   // Prevent body scroll and close on Escape when lightbox is open
   useEffect(() => {
@@ -46,36 +48,17 @@ const AddBlogPage = () => {
   }, [lightboxOpen]);
 
   // Load blogs from localStorage on component mount
-  useEffect(() => {
-    const savedBlogs = localStorage.getItem("blogs");
-    if (savedBlogs) {
-      setBlogs(JSON.parse(savedBlogs));
-    }
-  }, []);
+  // useEffect(() => {
+  //   const savedBlogs = localStorage.getItem("blogs");
+  //   if (savedBlogs) {
+  //     setBlogs(JSON.parse(savedBlogs));
+  //   }
+  // }, []);
 
-  // Save blogs to localStorage whenever blogs array changes
-  useEffect(() => {
-    try {
-      const blogsData = JSON.stringify(blogs);
-      const sizeInMB = new Blob([blogsData]).size / (1024 * 1024);
-      if (sizeInMB > 4) {
-        alert(
-          "Storage limit approaching. Consider removing some blog images or older posts."
-        );
-        return;
-      }
-      localStorage.setItem("blogs", blogsData);
-    } catch (error) {
-      if (error && error.name === "QuotaExceededError") {
-        alert(
-          "Storage quota exceeded! Please remove some blog posts or images to free up space."
-        );
-        console.error("LocalStorage quota exceeded:", error);
-      } else {
-        console.error("Error saving blogs:", error);
-      }
-    }
-  }, [blogs]);
+  // // Save blogs to localStorage whenever blogs array changes
+  // useEffect(() => {
+  //   localStorage.setItem("blogs", JSON.stringify(blogs));
+  // }, [blogs]);
 
   // Function to compress image
   const compressImage = (file, maxWidth = 800, quality = 0.7) => {
@@ -124,29 +107,41 @@ const AddBlogPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!title || !date || !content) {
-      alert("Please fill in all required fields");
-      return;
-    }
-    const blogData = {
-      id: editingId || Date.now(),
-      title,
-      date,
-      content,
-      image: imagePreview,
-      createdAt: editingId
-        ? blogs.find((b) => b.id === editingId)?.createdAt
-        : new Date().toISOString(),
-    };
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (editingId) {
-      setBlogs(blogs.map((blog) => (blog.id === editingId ? blogData : blog)));
-      setEditingId(null);
-    } else {
-      setBlogs([blogData, ...blogs]);
-    }
+  // Validate fields
+  if (!title || !date || !content) {
+    alert("Please fill in all required fields");
+    return;
+  }
+
+  // Prepare FormData
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("content", content);
+  formData.append("date", date);
+  
+  if (image) {
+    formData.append("image", image); // MUST match multer field name
+  }
+
+  try {
+    const response = await axios.post(
+      "http://localhost:5000/api/admin/blogs",
+      formData,
+      {
+       headers: {
+          "Content-Type": "multipart/form-data",
+           "Authorization": `Bearer ${token}`, // Uncomment if using auth
+        },
+      }
+    );
+
+    const newBlog = response.data;
+
+    // Update local state
+    setBlogs((prevBlogs) => [newBlog, ...prevBlogs]);
 
     setTitle("");
     setDate("");
@@ -156,22 +151,70 @@ const AddBlogPage = () => {
 
     const fileInput = document.getElementById("file-upload");
     if (fileInput) fileInput.value = "";
-  };
 
-  const handleEdit = (blog) => {
-    setTitle(blog.title);
-    setDate(blog.date);
-    setContent(blog.content);
-    setImagePreview(blog.image);
-    setEditingId(blog.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    alert("Blog created successfully!");
+  } catch (error) {
+    console.error("Failed to create blog:", error?.response?.data || error.message);
+    alert("Error creating blog.");
+  }
+};
 
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this blog?")) {
-      setBlogs(blogs.filter((blog) => blog.id !== id));
+const handleEdit = async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("content", content);
+  formData.append("date", date);
+  if (imageFile) formData.append("image", imageFile); // only if a new image is selected
+
+  try {
+    const res = await axios.put(
+      `/api/admin/blogs/${editingId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    );
+
+    // Handle success: update UI or reset form
+    console.log("Blog updated", res.data);
+  } catch (err) {
+    console.error("Error updating blog", err.response?.data || err.message);
+  }
+};
+
+
+
+  // const handleEdit = (blog) => {
+  //   setTitle(blog.title);
+  //   setDate(blog.date);
+  //   setContent(blog.content);
+  //   setImagePreview(blog.image);
+  //   setEditingId(blog.id);
+
+  //   // Scroll to top
+  //   window.scrollTo({ top: 0, behavior: "smooth" });
+  // };
+
+const handleDelete = async (id) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this blog?");
+  if (!confirmDelete) return;
+
+  try {
+    const res = await axios.delete(`/api/admin/blogs/${id}`); // Adjust path if needed
+
+    if (res.data.message === "Blog deleted successfully") {
+      setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog._id !== id));
     }
-  };
+  } catch (err) {
+    console.error("Delete failed:", err.response?.data || err.message);
+    alert("Failed to delete the blog. Please try again.");
+  }
+};
+
 
   const cancelEdit = () => {
     setTitle("");
