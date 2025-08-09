@@ -10,12 +10,32 @@ const AddBlogPage = () => {
   const [blogs, setBlogs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const dateInputRef = useRef(null);
 
-  // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [lightboxAlt, setLightboxAlt] = useState("");
+
+  const token = localStorage.getItem("token");
+
+  // 🟢 Fetch blogs on mount
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const response = await axios.get("http://localhost:5001/api/admin/blogs", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setBlogs(response.data);
+      } catch (error) {
+        console.error("Failed to fetch blogs:", error?.response?.data || error.message);
+      }
+    };
+
+    fetchBlogs();
+  }, []);
 
   const openLightbox = (src, alt) => {
     setLightboxSrc(src);
@@ -27,9 +47,7 @@ const AddBlogPage = () => {
     setLightboxSrc(null);
     setLightboxAlt("");
   };
-  const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
 
-  // Prevent body scroll and close on Escape when lightbox is open
   useEffect(() => {
     if (!lightboxOpen) return;
 
@@ -47,20 +65,6 @@ const AddBlogPage = () => {
     };
   }, [lightboxOpen]);
 
-  // Load blogs from localStorage on component mount
-  // useEffect(() => {
-  //   const savedBlogs = localStorage.getItem("blogs");
-  //   if (savedBlogs) {
-  //     setBlogs(JSON.parse(savedBlogs));
-  //   }
-  // }, []);
-
-  // // Save blogs to localStorage whenever blogs array changes
-  // useEffect(() => {
-  //   localStorage.setItem("blogs", JSON.stringify(blogs));
-  // }, [blogs]);
-
-  // Function to compress image
   const compressImage = (file, maxWidth = 800, quality = 0.7) => {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas");
@@ -84,6 +88,7 @@ const AddBlogPage = () => {
   const handleImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       setImage(file);
       try {
         let processedFile = file;
@@ -107,119 +112,109 @@ const AddBlogPage = () => {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Validate fields
-  if (!title || !date || !content) {
-    alert("Please fill in all required fields");
-    return;
-  }
-
-  // Prepare FormData
-  const formData = new FormData();
-  formData.append("title", title);
-  formData.append("content", content);
-  formData.append("date", date);
-  
-  if (image) {
-    formData.append("image", image); // MUST match multer field name
-  }
-
-  try {
-    const response = await axios.post(
-      "http://localhost:5000/api/admin/blogs",
-      formData,
-      {
-       headers: {
-          "Content-Type": "multipart/form-data",
-           "Authorization": `Bearer ${token}`, // Uncomment if using auth
-        },
-      }
-    );
-
-    const newBlog = response.data;
-
-    // Update local state
-    setBlogs((prevBlogs) => [newBlog, ...prevBlogs]);
-
-    setTitle("");
-    setDate("");
-    setImage(null);
-    setContent("");
-    setImagePreview(null);
-
-    const fileInput = document.getElementById("file-upload");
-    if (fileInput) fileInput.value = "";
-
-    alert("Blog created successfully!");
-  } catch (error) {
-    console.error("Failed to create blog:", error?.response?.data || error.message);
-    alert("Error creating blog.");
-  }
-};
-
-const handleEdit = async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData();
-  formData.append("title", title);
-  formData.append("content", content);
-  formData.append("date", date);
-  if (imageFile) formData.append("image", imageFile); // only if a new image is selected
-
-  try {
-    const res = await axios.put(
-      `/api/admin/blogs/${editingId}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        }
-      }
-    );
-
-    // Handle success: update UI or reset form
-    console.log("Blog updated", res.data);
-  } catch (err) {
-    console.error("Error updating blog", err.response?.data || err.message);
-  }
-};
-
-
-
-  // const handleEdit = (blog) => {
-  //   setTitle(blog.title);
-  //   setDate(blog.date);
-  //   setContent(blog.content);
-  //   setImagePreview(blog.image);
-  //   setEditingId(blog.id);
-
-  //   // Scroll to top
-  //   window.scrollTo({ top: 0, behavior: "smooth" });
-  // };
-
-const handleDelete = async (id) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete this blog?");
-  if (!confirmDelete) return;
-
-  try {
-    const res = await axios.delete(`/api/admin/blogs/${id}`); // Adjust path if needed
-
-    if (res.data.message === "Blog deleted successfully") {
-      setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog._id !== id));
+    if (!title || !date || !content) {
+      alert("Please fill in all required fields");
+      return;
     }
-  } catch (err) {
-    console.error("Delete failed:", err.response?.data || err.message);
-    alert("Failed to delete the blog. Please try again.");
-  }
-};
 
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append("content", content);
+    formData.append("date", date);
+
+    if (imageFile) {
+      formData.append("image", imageFile);
+    }
+
+    try {
+      if (editingId) {
+        // UPDATE
+        const res = await axios.put(
+          `http://localhost:5001/api/admin/blogs/${editingId}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        const updatedBlog = res.data;
+        setBlogs((prev) =>
+          prev.map((b) => (b._id === updatedBlog._id ? updatedBlog : b))
+        );
+        alert("Blog updated successfully!");
+      } else {
+        // CREATE
+        const response = await axios.post(
+          "http://localhost:5001/api/admin/blogs",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        const newBlog = response.data;
+        setBlogs((prevBlogs) => [newBlog, ...prevBlogs]);
+        alert("Blog created successfully!");
+      }
+
+      setTitle("");
+      setDate("");
+      setImage(null);
+      setImageFile(null);
+      setContent("");
+      setImagePreview(null);
+      setEditingId(null);
+      const fileInput = document.getElementById("file-upload");
+      if (fileInput) fileInput.value = "";
+
+    } catch (error) {
+      console.error("Error submitting blog:", error?.response?.data || error.message);
+      alert("Error saving blog.");
+    }
+  };
+
+  const handleEdit = (blog) => {
+    setTitle(blog.title);
+    setDate(blog.date);
+    setContent(blog.content);
+    setImagePreview(blog.image);
+    setEditingId(blog._id);
+    setImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this blog?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await axios.delete(`http://localhost:5001/api/admin/blogs/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (res.data.message === "Blog deleted successfully") {
+        setBlogs((prevBlogs) => prevBlogs.filter((blog) => blog._id !== id));
+      }
+    } catch (err) {
+      console.error("Delete failed:", err.response?.data || err.message);
+      alert("Failed to delete the blog. Please try again.");
+    }
+  };
 
   const cancelEdit = () => {
     setTitle("");
     setDate("");
     setImage(null);
+    setImageFile(null);
     setContent("");
     setImagePreview(null);
     setEditingId(null);
@@ -229,33 +224,10 @@ const handleDelete = async (id) => {
 
   const removeImage = () => {
     setImage(null);
+    setImageFile(null);
     setImagePreview(null);
     const fileInput = document.getElementById("file-upload");
     if (fileInput) fileInput.value = "";
-  };
-
-  // Optional helpers (not displayed, kept from your code)
-  const getStorageUsage = () => {
-    try {
-      const blogsData = localStorage.getItem("blogs") || "[]";
-      const sizeInBytes = new Blob([blogsData]).size;
-      const sizeInMB = (sizeInBytes / (1024 * 1024)).toFixed(2);
-      return { sizeInMB, sizeInBytes };
-    } catch (error) {
-      return { sizeInMB: "0", sizeInBytes: 0 };
-    }
-  };
-
-  const clearAllBlogs = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete ALL blogs? This action cannot be undone."
-      )
-    ) {
-      setBlogs([]);
-      localStorage.removeItem("blogs");
-      alert("All blogs have been cleared.");
-    }
   };
 
   return (
@@ -402,9 +374,8 @@ const handleDelete = async (id) => {
               </div>
             ) : (
               <div className="bg-[#1F2A44] text-white p-3 sm:p-4 md:p-6 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 space-y-8 sm:space-y-10 md:space-y-12">
-                {blogs.map((blog) => (
-                  <div
-                    key={blog.id}
+                {blogs.map((blog,index) => (
+                  <div key={blog._id || blog.id || index}
                     className="border-b border-gray-600 pb-6 sm:pb-8 last:border-b-0"
                   >
                     <div className="flex justify-start text-xs sm:text-sm mb-3 sm:mb-4">

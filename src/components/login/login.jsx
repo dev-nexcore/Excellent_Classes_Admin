@@ -17,25 +17,33 @@ const Login = () => {
     setMounted(true);
   }, []);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrorMsg("");
 
-    // Simulate a client-side login process
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
+  try {
+    const response = await axios.post("http://localhost:5001/api/admin/auth/login", {
+      email,
+      password
+    });
 
-    if (email === "admin@example.com" && password === "password") {
-      // Simulate successful login
-      const urlParams = new URLSearchParams(window.location.search);
-      const callbackUrl = urlParams.get("callbackUrl") || "/dashboard";
-      window.location.href = callbackUrl; // Client-side navigation
-    } else {
-      setErrorMsg("Invalid email or password.");
-    }
+    const { token } = response.data;
 
+    // ✅ Save token to localStorage
+    localStorage.setItem("token", token);
+
+    // ✅ Redirect to dashboard
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackUrl = urlParams.get("callbackUrl") || "/dashboard";
+    window.location.href = callbackUrl;
+  } catch (err) {
+    const msg = err.response?.data?.message || "Login failed. Please try again.";
+    setErrorMsg(msg);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   return (
     <div
