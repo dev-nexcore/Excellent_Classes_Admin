@@ -27,6 +27,7 @@ const AddBlogPage = () => {
     setLightboxSrc(null);
     setLightboxAlt("");
   };
+  const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
 
   // Prevent body scroll and close on Escape when lightbox is open
   useEffect(() => {
@@ -132,7 +133,7 @@ const handleSubmit = async (e) => {
       {
        headers: {
           "Content-Type": "multipart/form-data",
-          // "Authorization": `Bearer ${token}`, // Uncomment if using auth
+           "Authorization": `Bearer ${token}`, // Uncomment if using auth
         },
       }
     );
