@@ -61,10 +61,10 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/admin/media/images"),
-          axios.get("http://localhost:5000/api/admin/media/videos"),
-          axios.get("http://localhost:5000/api/admin/blogs"),
-          axios.get("http://localhost:5000/api/admin/notices"),
+          axios.get("http://localhost:5001/api/admin/media/images"),
+          axios.get("http://localhost:5001/api/admin/media/videos"),
+          axios.get("http://localhost:5001/api/admin/blogs"),
+          axios.get("http://localhost:5001/api/admin/notices"),
         ]);
 
         setStats({
@@ -82,7 +82,7 @@ export default function Dashboard() {
     const fetchActivities = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/admin/activities"
+          "http://localhost:5001/api/admin/activities"
         );
 
         if (Array.isArray(res.data)) {
