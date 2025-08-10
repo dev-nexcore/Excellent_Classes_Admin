@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 
 export default function AddTopper({ onAdd }) {
   const [form, setForm] = useState({
@@ -9,7 +12,8 @@ export default function AddTopper({ onAdd }) {
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
@@ -17,12 +21,14 @@ export default function AddTopper({ onAdd }) {
     if (
       form.name.trim() &&
       form.course.trim() &&
-      form.percentage.trim() &&
+      form.percentage &&
       form.year.trim()
     ) {
       const trimmedForm = {
-        ...form,
-        year: form.year.trim(), // only year
+        name: form.name.trim(),
+        course: form.course.trim(),
+        percentage: form.percentage,
+        year: form.year.trim(),
       };
       onAdd(trimmedForm);
       setForm({
@@ -39,8 +45,11 @@ export default function AddTopper({ onAdd }) {
       <h2 className="text-2xl font-bold mb-4">Add New Topper</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block font-semibold mb-1">Name of Student</label>
+          <label htmlFor="add-name" className="block font-semibold mb-1">
+            Name of Student
+          </label>
           <input
+            id="add-name"
             type="text"
             name="name"
             value={form.name}
@@ -49,11 +58,13 @@ export default function AddTopper({ onAdd }) {
             required
           />
         </div>
+
         <div>
-          <label className="block font-semibold mb-1">
+          <label htmlFor="add-course" className="block font-semibold mb-1">
             Name of Course/Section
           </label>
           <input
+            id="add-course"
             type="text"
             name="course"
             value={form.course}
@@ -62,9 +73,13 @@ export default function AddTopper({ onAdd }) {
             required
           />
         </div>
+
         <div>
-          <label className="block font-semibold mb-1">Percentage</label>
+          <label htmlFor="add-percentage" className="block font-semibold mb-1">
+            Percentage
+          </label>
           <input
+            id="add-percentage"
             type="text"
             name="percentage"
             value={form.percentage}
@@ -73,9 +88,13 @@ export default function AddTopper({ onAdd }) {
             required
           />
         </div>
+
         <div>
-          <label className="block font-semibold mb-1">Year</label>
+          <label htmlFor="add-year" className="block font-semibold mb-1">
+            Year
+          </label>
           <input
+            id="add-year"
             type="text"
             name="year"
             value={form.year}
@@ -84,6 +103,7 @@ export default function AddTopper({ onAdd }) {
             required
           />
         </div>
+
         <button
           type="submit"
           className="bg-[#1F2A44] text-white px-4 py-2 rounded-md hover:scale-105 transition"
@@ -94,3 +114,7 @@ export default function AddTopper({ onAdd }) {
     </div>
   );
 }
+
+AddTopper.propTypes = {
+  onAdd: PropTypes.func.isRequired,
+};

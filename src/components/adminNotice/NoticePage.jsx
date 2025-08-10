@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import EditActivity from "./EditActivity";
-import axios from "axios";
+import React, { useEffect, useMemo, useState } from "react";
 
+import { deleteNotice, fetchNotices, updateNotice } from "@/services/notices";
+import EditActivity from "./EditActivity";
+
+// Display date like: 19 June 2025
 const formatDate = (dateString) => {
+  if (!dateString) return "";
   const date = new Date(dateString);
   return date.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -13,28 +16,46 @@ const formatDate = (dateString) => {
   });
 };
 
-const NoticePage = () => {
+// Simple scroll lock hook for modals
+function useScrollLock(locked) {
+  useEffect(() => {
+    const { body } = document;
+    if (!body) return;
+    if (locked) {
+      body.style.overflow = "hidden";
+    } else {
+      body.style.overflow = "";
+    }
+    return () => {
+      body.style.overflow = "";
+    };
+  }, [locked]);
+}
+
+export default function NoticePage() {
   const [notices, setNotices] = useState([]);
   const [noticeText, setNoticeText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
   const [editingIndex, setEditingIndex] = useState(null);
   const [editData, setEditData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchNotices = async () => {
+  // Lock body scroll when modal is open
+  useScrollLock(isModalOpen || editingIndex !== null);
+
+  // Hydrate notices (seed for now, axios later)
+  const load = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.get("http://localhost:5001/api/admin/notices");
+      console.log("Fetching notices...");
 
-      // Assuming API returns an array of notices
-      setNotices(res.data);
-    } catch (err) {
-      console.error("Error fetching notices:", err);
+      const data = await fetchNotices();
+      setNotices(data);
+    } catch {
       setError("Failed to fetch notices.");
     } finally {
       setLoading(false);
@@ -42,34 +63,32 @@ const NoticePage = () => {
   };
 
   useEffect(() => {
-    fetchNotices();
+    load();
   }, []);
 
   const handleSubmit = async () => {
     setError("");
     setSuccess("");
-
     if (!noticeText.trim()) {
       setError("Notice text cannot be empty.");
       return;
     }
-
     setSubmitting(true);
-
     try {
       const newNotice = {
         user: "admin@domain.com",
         description: `Added a new notice:\n"${noticeText}"`,
         date: new Date().toISOString(),
       };
-
-      // ✅ For now, just log instead of updating list
+      // Preserve behavior: log and alert, do not add to list.
+      // (You can wire this to a POST endpoint later.)
+      // eslint-disable-next-line no-console
       console.log("Submitted Notice:", newNotice);
       alert("Notice submitted: " + noticeText);
-
       setNoticeText("");
       setSuccess("Notice submitted successfully.");
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
       setError("Failed to submit notice.");
     } finally {
@@ -83,32 +102,79 @@ const NoticePage = () => {
     setIsModalOpen(true);
   };
 
-  const handleUpdate = (index, updatedNotice) => {
-    const updatedNotices = [...notices];
-    updatedNotices[index] = updatedNotice;
-    setNotices(updatedNotices);
+  const handleUpdate = async (index, updatedNotice) => {
+    try {
+      // Call the API
+      await updateNotice(notices[index]._id, updatedNotice);
+
+      // Update local state
+      setNotices((prev) => {
+        const next = prev.slice();
+        next[index] = updatedNotice;
+        return next;
+      });
+
+      // Refresh the notices
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update notice.");
+    }
   };
 
-  const handleDelete = (index) => {
-    const updated = notices.filter((_, i) => i !== index);
-    setNotices(updated);
+  const handleDelete = async (index) => {
+    try {
+      // Call the API
+      await deleteNotice(notices[index]._id);
+
+      // Update local state
+      setNotices((prev) => prev.filter((_, i) => i !== index));
+
+      // Refresh the notices
+      await load();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete notice.");
+    }
+  };
+
+  // Stable key selection (prefer id if present)
+  const rows = useMemo(
+    () => notices.map((n, i) => ({ n, i, key: n.id ?? String(i) })),
+    [notices]
+  );
+
+  const onKeyDownCloseModal = (e) => {
+    if (e.key === "Escape") {
+      if (isModalOpen) setIsModalOpen(false);
+      if (editingIndex !== null) setEditingIndex(null);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#f2f7ff] font-[poppins] p-4 md:p-6">
-      <h1 className="text-2xl md:text-3xl font-extrabold font-[poppins] text-[#1F2A44] mb-6 ml-2 md:ml-4">
-        Notice Board
+    <div
+      className="min-h-screen bg-[#f2f7ff] font-[poppins] p-4 md:p-6"
+      onKeyDown={onKeyDownCloseModal}
+      role="region"
+      aria-label="Notice board"
+    >
+      <h1 className="text-2xl md:text-3xl font-extrabold text-[#1F2A44] mb-6 ml-2 md:ml-4">
+        {"Notice Board"}
       </h1>
 
       {/* Add Notice */}
       <div className="mb-10 ml-2 mr-2 md:ml-4 md:mr-4">
         <h2 className="text-lg md:text-xl font-semibold text-[#1F2A44] mb-3">
-          Add New Notice
+          {"Add New Notice"}
         </h2>
 
         <div className="mr-4 md:mr-20 ml-4 md:ml-6">
           <div className="bg-white rounded-lg shadow-lg">
+            <label htmlFor="notice-input" className="sr-only">
+              {"Notice content"}
+            </label>
             <textarea
+              id="notice-input"
               placeholder="Enter your notice here"
               value={noticeText}
               onChange={(e) => setNoticeText(e.target.value)}
@@ -119,103 +185,171 @@ const NoticePage = () => {
 
           <div className="flex justify-end mt-4">
             <button
+              type="button"
               onClick={handleSubmit}
               className={`bg-[#1F2A44] text-white px-5 py-2 md:px-6 md:py-2 rounded-md font-medium cursor-pointer shadow-md text-sm md:text-base transition transform hover:scale-105 hover:bg-[#162033] ${
                 submitting ? "opacity-60 cursor-not-allowed" : ""
               }`}
+              aria-disabled={submitting}
             >
               {submitting ? "Submitting..." : "SUBMIT"}
             </button>
           </div>
 
-          {/* Success or Error Messages */}
           {error && (
-            <p className="text-[#C70000] text-sm mt-3 font-medium">{error}</p>
+            <p className="text-[#C70000] text-sm mt-3 font-medium" role="alert">
+              {error}
+            </p>
           )}
           {success && (
-            <p className="text-[#096604] text-sm mt-3 font-medium">{success}</p>
+            <p
+              className="text-[#096604] text-sm mt-3 font-medium"
+              role="status"
+            >
+              {success}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Recent Activity Table */}
+      {/* Recent Activity */}
       <h2 className="text-lg md:text-2xl font-semibold text-[#1F2A44] mb-4 ml-2 md:ml-4">
-        Recent Activity
+        {"Recent Activity"}
       </h2>
 
       {loading ? (
-        <div className="text-center text-gray-600">Loading...</div>
+        <div className="text-center text-gray-600">{"Loading..."}</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl mx-4 md:mx-8">
-          <table className="w-full min-w-[600px]  shadow-md text-sm md:text-base">
-            <thead>
-              <tr className="bg-[#E85222] text-white font-bold text-center text-xs md:text-sm lg:text-base">
-                <th className="px-2 md:px-4 py-2 md:py-3 border-r border-black">
-                  User
-                </th>
-                <th className="px-2 md:px-4 py-2 md:py-3 border-r border-black">
-                  Description
-                </th>
-                <th className="px-2 md:px-4 py-2 md:py-3 border-r border-black">
-                  Date
-                </th>
-                <th className="px-2 md:px-4 py-2 md:py-3">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-[#BAC7E5] text-black text-center align-top text-xs md:text-sm">
-              {notices.map((notice, index) => (
-                <tr key={index}>
-                  <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium break-words">
-                    {notice.user}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black whitespace-pre-line break-words">
-                    {notice.description}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black">
-                    {formatDate(notice.date)}
-                  </td>
-                  <td className="px-2 md:px-4 py-2 md:py-3 space-x-1 md:space-x-2">
-                    <button
-                      className="text-green-600 cursor-pointer hover:underline"
-                      onClick={() => handleEdit(index)}
-                    >
-                      Edit
-                    </button>
-                    <span className="text-gray-400">|</span>
-                    <button
-                      className="text-red-600 cursor-pointer hover:underline"
-                      onClick={() => handleDelete(index)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto rounded-xl mx-4 md:mx-8 ">
+            <table className="w-full min-w-[600px] shadow-md text-sm md:text-base">
+              <thead>
+                <tr className="bg-[#E85222] text-white font-bold text-center text-xs md:text-sm lg:text-base">
+                  <th
+                    scope="col"
+                    className="px-2 md:px-4 py-2 md:py-3 border-r border-black"
+                  >
+                    {"User"}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 md:px-4 py-2 md:py-3 border-r border-black"
+                  >
+                    {"Description"}
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-2 md:px-4 py-2 md:py-3 border-r border-black"
+                  >
+                    {"Date"}
+                  </th>
+                  <th scope="col" className="px-2 md:px-4 py-2 md:py-3">
+                    {"Action"}
+                  </th>
                 </tr>
-              ))}
-              {notices.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="py-4 text-gray-600">
-                    No notices found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+
+              <tbody className="bg-[#BAC7E5] text-black text-center align-top text-xs md:text-sm">
+                {rows.map(({ n, i, key }) => (
+                  <tr key={key}>
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium break-words">
+                      {n.user}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium whitespace-pre-line break-words">
+                      {n.description}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium">
+                      {formatDate(n.date)}
+                    </td>
+                    <td className="px-2 md:px-4 py-2 md:py-3 space-x-1 md:space-x-2">
+                      <button
+                        type="button"
+                        className="text-green-600 cursor-pointer hover:underline"
+                        onClick={() => handleEdit(i)}
+                      >
+                        {"Edit"}
+                      </button>
+                      <span className="text-gray-400" aria-hidden="true">
+                        {"|"}
+                      </span>
+                      <button
+                        type="button"
+                        className="text-red-600 cursor-pointer hover:underline"
+                        onClick={() => handleDelete(i)}
+                      >
+                        {"Delete"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-4 text-gray-600">
+                      {"No notices found."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="grid grid-cols-1 gap-4 md:hidden px-4">
+            {rows.map(({ n, i, key }) => (
+              <div key={key} className="bg-[#BAC7E5] rounded-lg shadow-md p-4">
+                <p className="text-sm font-semibold text-[#1F2A44]">
+                  {"User: "}
+                  <span className="font-normal">{n.user}</span>
+                </p>
+                <p className="text-sm mt-2 whitespace-pre-line">
+                  {n.description}
+                </p>
+                <p className="text-xs text-gray-700 mt-2">
+                  {formatDate(n.date)}
+                </p>
+                <div className="flex justify-end mt-3 space-x-3">
+                  <button
+                    type="button"
+                    className="text-green-600 text-sm font-medium"
+                    onClick={() => handleEdit(i)}
+                  >
+                    {"Edit"}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-red-600 text-sm font-medium"
+                    onClick={() => handleDelete(i)}
+                  >
+                    {"Delete"}
+                  </button>
+                </div>
+              </div>
+            ))}
+            {rows.length === 0 && (
+              <p className="text-gray-600 text-center py-4">
+                {"No notices found."}
+              </p>
+            )}
+          </div>
+        </>
       )}
 
       {/* Edit Modal */}
       <EditActivity
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingIndex(null);
+        }}
         onUpdate={handleUpdate}
         initialData={{
           ...editData,
+          // Preserve your behavior: pass formatted date into the modal
           date: formatDate(editData?.date),
         }}
         index={editingIndex}
       />
     </div>
   );
-};
-
-export default NoticePage;
+}
