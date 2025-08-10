@@ -41,7 +41,7 @@ const Login = () => {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/admin/auth/login', { email, password }); // ✅ Ensure correct route
+      const res = await axios.post('http://localhost:5001/api/admin/auth/login', { email, password }); // ✅ Ensure correct route
       const { token } = res.data;
 
       // Store token locally (could be cookie instead)
