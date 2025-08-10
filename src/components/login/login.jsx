@@ -1,13 +1,13 @@
 "use client";
-
+import axios from 'axios';
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+ const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+ const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -17,34 +17,43 @@ const Login = () => {
     setMounted(true);
   }, []);
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setErrorMsg("");
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setLoading(true);
+  //   setErrorMsg("");
 
-  try {
-    const response = await axios.post("http://localhost:5001/api/admin/auth/login", {
-      email,
-      password
-    });
+  //   // Simulate a client-side login process
+  //   await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
 
-    const { token } = response.data;
+  //   if (email === "admin@example.com" && password === "password") {
+  //     // Simulate successful login
+  //     const urlParams = new URLSearchParams(window.location.search);
+  //     const callbackUrl = urlParams.get("callbackUrl") || "/dashboard";
+  //     window.location.href = callbackUrl; // Client-side navigation
+  //   } else {
+  //     setErrorMsg("Invalid email or password.");
+  //   }
 
-    // ✅ Save token to localStorage
-    localStorage.setItem("token", token);
+  //   setLoading(false);
+  // };
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError('');
 
-    // ✅ Redirect to dashboard
-    const urlParams = new URLSearchParams(window.location.search);
-    const callbackUrl = urlParams.get("callbackUrl") || "/dashboard";
-    window.location.href = callbackUrl;
-  } catch (err) {
-    const msg = err.response?.data?.message || "Login failed. Please try again.";
-    setErrorMsg(msg);
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const res = await axios.post('http://localhost:5000/api/admin/auth/login', { email, password }); // ✅ Ensure correct route
+      const { token } = res.data;
 
+      // Store token locally (could be cookie instead)
+      localStorage.setItem('adminToken', token);
+
+      // Redirect to dashboard or admin page
+      router.push('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Login failed');
+    }
+  };
   return (
     <div
       className="h-screen w-screen flex items-center justify-center bg-[#233B77] overflow-hidden"
@@ -181,9 +190,9 @@ const handleLogin = async (e) => {
                 </div>
               </div>
               {/* Error Message */}
-              {errorMsg && (
+              {error && (
                 <div className="text-red-600 text-sm font-semibold text-center animate-fadeInUp">
-                  {errorMsg}
+                  {error}
                 </div>
               )}
               {/* Button Wrapper to Center the Button */}
@@ -328,9 +337,9 @@ const handleLogin = async (e) => {
                 </div>
               </div>
               {/* Error Message */}
-              {errorMsg && (
+              {error && (
                 <div className="text-red-600 text-xs xs:text-sm font-semibold text-center animate-fadeInUp">
-                  {errorMsg}
+                  {error}
                 </div>
               )}
               {/* Submit Button */}
