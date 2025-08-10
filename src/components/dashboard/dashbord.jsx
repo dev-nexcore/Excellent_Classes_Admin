@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import axios from "axios";
 
 function CountUp({
   value,
@@ -28,7 +29,7 @@ function CountUp({
       if (t0 === null) t0 = t;
       const elapsed = t - t0;
       const progress = Math.min(elapsed / durationMs, 1);
-      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(start + (value - start) * eased);
       setDisplay(current);
       if (progress < 1) {
@@ -43,39 +44,65 @@ function CountUp({
   return <span aria-live="polite">{format(display)}</span>;
 }
 
-const Dashboard = () => {
-  const recentActivities = [
-    {
-      user: "admin1@.com",
-      action: "Edited Title",
-      section: "Blogs",
-      datetime: "19 June 2025, 10:45 AM",
-    },
-    {
-      user: "admin2@.com",
-      action: "Added new notice",
-      section: "Notice board",
-      datetime: "15 June 2025, 11:29 AM",
-    },
-    {
-      user: "admin3@.com",
-      action: "Deleted image",
-      section: "Gallery",
-      datetime: "12 June 2025, 08:22 PM",
-    },
-    {
-      user: "admin4@.com",
-      action: "Updated topper list",
-      section: "Topper list",
-      datetime: "11 June 2025, 09:15 AM",
-    },
-    {
-      user: "admin5@.com",
-      action: "Added video",
-      section: "Video gallery",
-      datetime: "05 June 2025, 07:55 PM",
-    },
-  ];
+export default function Dashboard() {
+  const [recentActivities, setRecentActivities] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  const [stats, setStats] = React.useState({
+    images: 0,
+    videos: 0,
+    blogs: 0,
+    notices: 0,
+  });
+
+  React.useEffect(() => {
+    // Fetch Stats
+    const fetchStats = async () => {
+      try {
+        const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/admin/media/images"),
+          axios.get("http://localhost:5000/api/admin/media/videos"),
+          axios.get("http://localhost:5000/api/admin/blogs"),
+          axios.get("http://localhost:5000/api/admin/notices"),
+        ]);
+
+        setStats({
+          images: imageRes.data.length,
+          videos: videoRes.data.length,
+          blogs: blogRes.data.length,
+          notices: noticeRes.data.length,
+        });
+      } catch (err) {
+        console.error("Failed to fetch one or more stats", err);
+      }
+    };
+
+    // Fetch Recent Activities
+    const fetchActivities = async () => {
+      try {
+        const res = await axios.get(
+          "http://localhost:5000/api/admin/activities"
+        );
+
+        if (Array.isArray(res.data)) {
+          setRecentActivities(res.data);
+        } else if (Array.isArray(res.data.activities)) {
+          setRecentActivities(res.data.activities);
+        } else {
+          setRecentActivities([]);
+        }
+      } catch (err) {
+        setError("Failed to fetch recent activities");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+    fetchActivities();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F4F9FF] text-[#333] p-4 sm:p-6 font-poppins">
@@ -86,12 +113,12 @@ const Dashboard = () => {
         </h1>
 
         {/* Stats Cards */}
-        <div className="flex flex-wrap justify-center sm:justify-between gap-4 sm:gap-0 mb-10">
+        <div className="flex flex-wrap justify-center sm:justify-between gap-4 mb-10">
           {[
-            { count: 4, label: "Notices" },
-            { count: 25, label: "Photos" },
-            { count: 2, label: "Videos" },
-            { count: 2, label: "Blogs" },
+            { count: stats.notices, label: "Notices" },
+            { count: stats.images, label: "Photos" },
+            { count: stats.videos, label: "Videos" },
+            { count: stats.blogs, label: "Blogs" },
           ].map((item, index) => (
             <div
               key={index}
@@ -114,73 +141,93 @@ const Dashboard = () => {
           Recent Activity
         </h2>
 
-        {/* Desktop Table - Hidden on mobile and tablet */}
-        <div className="hidden lg:block overflow-x-auto rounded-2xl">
-          <table className="min-w-[600px] w-full text-left border-separate border-spacing-0 bg-[#BAC7E5]">
-            <thead>
-              <tr className="bg-[#E85222] text-white text-center font-bold">
-                <th className="p-3 border-r border-black">User</th>
-                <th className="p-3 border-r border-black">Action</th>
-                <th className="p-3 border-r border-black">Section</th>
-                <th className="p-3">Date &amp; Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentActivities.map((activity, index) => (
-                <tr key={index} className="text-center font-medium text-black">
-                  <td className="px-1 py-2 border-r border-black">
-                    {activity.user}
-                  </td>
-                  <td className="px-1 py-2 border-r border-black">
-                    {activity.action}
-                  </td>
-                  <td className="px-1 py-2 border-r border-black">
-                    {activity.section}
-                  </td>
-                  <td className="px-1 py-2">{activity.datetime}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {loading && <p>Loading recent activities...</p>}
+        {error && <p className="text-red-600">{error}</p>}
 
-        {/* Mobile & Tablet Cards - Hidden on desktop */}
-        <div className="lg:hidden space-y-4">
-          {recentActivities.map((activity, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg shadow-md border border-gray-200 p-4"
-            >
-              {/* Header with User */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                    {activity.user.charAt(0).toUpperCase()}
+        {!loading && !error && (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto rounded-2xl">
+              <table className="min-w-[600px] w-full text-left border-separate border-spacing-0 bg-[#BAC7E5]">
+                <thead>
+                  <tr className="bg-[#E85222] text-white text-center font-bold">
+                    <th className="p-3 border-r border-black">User</th>
+                    <th className="p-3 border-r border-black">Action</th>
+                    <th className="p-3 border-r border-black">Section</th>
+                    <th className="p-3">Date &amp; Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentActivities.map((activity, index) => (
+                    <tr
+                      key={index}
+                      className="text-center font-medium text-black"
+                    >
+                      <td className="px-1 py-2 border-r border-black">
+                        {activity.user}
+                      </td>
+                      <td className="px-1 py-2 border-r border-black">
+                        {activity.action}
+                      </td>
+                      <td className="px-1 py-2 border-r border-black">
+                        {activity.section}
+                      </td>
+                      <td className="px-1 py-2">
+                        {new Date(activity.dateTime).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile & Tablet Cards */}
+            <div className="lg:hidden space-y-4">
+              {recentActivities.map((activity, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-lg shadow-md border border-gray-200 p-4"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                        {activity.user.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm font-semibold text-[#1F2A44]">
+                          {activity.user}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium">
+                      {activity.section}
+                    </span>
                   </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-semibold text-[#1F2A44]">
-                      {activity.user}
+                  <div className="mb-3">
+                    <p className="text-gray-800 font-medium">
+                      {activity.action}
+                    </p>
+                  </div>
+                  <div className="border-t border-gray-200 pt-2">
+                    <p className="text-xs text-gray-500">
+                      {activity.dateTime
+                        ? new Date(activity.dateTime).toLocaleString()
+                        : ""}
                     </p>
                   </div>
                 </div>
-                <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium">
-                  {activity.section}
-                </span>
-              </div>
-              {/* Action */}
-              <div className="mb-3">
-                <p className="text-gray-800 font-medium">{activity.action}</p>
-              </div>
-              {/* Date & Time */}
-              <div className="border-t border-gray-200 pt-2">
-                <p className="text-xs text-gray-500">{activity.datetime}</p>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
