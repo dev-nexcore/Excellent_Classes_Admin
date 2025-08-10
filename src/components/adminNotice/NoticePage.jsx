@@ -29,7 +29,7 @@ const NoticePage = () => {
     setLoading(true);
     setError("");
     try {
-      const res = await axios.get("http://localhost:5000/api/admin/notices");
+      const res = await axios.get("http://localhost:5001/api/admin/notices");
 
       // Assuming API returns an array of notices
       setNotices(res.data);

@@ -1,41 +1,75 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState ,useEffect,useRef} from "react";
+import axios from "axios";
 import { Trash2 } from "lucide-react";
 
 export default function VideoGallery() {
+   const fileInputRef = useRef(null); 
   const [selectedFile, setSelectedFile] = useState(null);
-  const [videos, setVideos] = useState([
-    { id: 1, thumbnail: null, file: null },
-    { id: 2, thumbnail: null, file: null },
-  ]);
+  const [videos, setVideos] = useState([]);
+  
+  useEffect(() => {
+  const fetchVideos = async () => {
+    try {
+      const res = await axios.get('http://localhost:5001/api/admin/media/videos'); // Make sure this is the correct backend route
+      setVideos(res.data);
+    } catch (err) {
+      console.error('Failed to fetch videos:', err);
+    }
+  };
+
+  fetchVideos();
+}, []);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     setSelectedFile(file);
   };
 
-  const handleSubmit = () => {
-    if (selectedFile) {
-      // Create a new video object with unique ID
-      const newVideo = {
-        id: videos.length + 1,
-        thumbnail: URL.createObjectURL(selectedFile),
-        file: selectedFile,
-        name: selectedFile.name,
-      };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (selectedFile) {
+    try {
+      const formData = new FormData();
+      formData.append('video', selectedFile); // This must match the multer field name!
 
-      // Add new video to the list
-      setVideos([...videos, newVideo]);
+      const res = await axios.post(
+        'http://localhost:5001/api/admin/media/videos',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure you have the token set
+          },
+        }
+      );
 
-      // Reset file input
+      // Add the new video to your state
+      setVideos([...videos, res.data]);
       setSelectedFile(null);
-      document.getElementById("video-upload").value = "";
-    }
-  };
+      fileInputRef.current.value = '';
 
-  const handleDelete = (videoId) => {
-    setVideos(videos.filter((video) => video.id !== videoId));
-  };
+    } catch (err) {
+      console.error('Upload failed:', err);
+    }
+  }
+};
+
+const handleDelete = async (id) => {
+  try {
+    await axios.delete(`http://localhost:5001/api/admin/media/videos/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure token is set
+      },
+    });
+
+    // Remove deleted video from state
+    setVideos(videos.filter((v) => v._id !== id));
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+};
+
 
   const handleClearSelectedFile = () => {
     setSelectedFile(null);
@@ -103,26 +137,27 @@ export default function VideoGallery() {
       {/* Video Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {videos.map((video) => (
-          <div key={video.id} className="flex flex-col">
+          <div key={video._id} className="flex flex-col">
             {/* Video Thumbnail */}
             <div className="bg-[#D9D9D9] shadow-sm aspect-video w-full sm:h-[20vw] h-[24vh] relative overflow-hidden rounded-lg">
-              {video.thumbnail ? (
-                <video
-                  className="w-full h-full object-cover"
-                  controls
-                  preload="metadata"
-                >
-                  <source src={video.thumbnail} type={video.file?.type} />
-                  Your browser does not support the video tag.
-                </video>
-              ) : (
+             
+            <video
+  className="w-full h-full object-cover"
+  controls
+  preload="metadata"
+>
+  <source src={video.videoUrl} type="video/mp4" />
+  Your browser does not support the video tag.
+</video>
+
+          
                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm"></div>
-              )}
+          
             </div>
 
             {/* Delete Button - Outside the box */}
             <button
-              onClick={() => handleDelete(video.id)}
+              onClick={() => handleDelete(video._id)}
               className="cursor-pointer text-[#C70000] font-medium transition-colors text-sm sm:text-base mt-2 text-left hover:text-red-700"
             >
               Delete
