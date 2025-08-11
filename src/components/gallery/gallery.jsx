@@ -6,6 +6,7 @@ export default function Page() {
   const [images, setImages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedFileName, setSelectedFileName] = useState("No File chosen");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const API_BASE_URL = "http://localhost:5001/api/admin/media";
 
@@ -50,11 +51,13 @@ export default function Page() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || isSubmitting) return;
+
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
-  
+
       const response = await fetch(`${API_BASE_URL}/images`, {
         method: "POST",
         headers: {
@@ -83,6 +86,8 @@ export default function Page() {
       if (fileInput) fileInput.value = "";
     } catch (err) {
       console.error("❌ Upload failed", err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,6 +143,7 @@ export default function Page() {
             id="file-upload"
             accept="image/*"
             onChange={handleFileChange}
+            disabled={isSubmitting}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
           <div className="flex items-center bg-[#D9D9D9] text-black rounded-md border-2 border-[#877575] px-4 py-2 cursor-pointer shadow-[0px_4.44px_4.44px_0px_#00000040]">
@@ -159,14 +165,14 @@ export default function Page() {
         {/* Submit Button  */}
         <button
           onClick={handleSubmit}
-          disabled={!selectedFile}
+          disabled={!selectedFile || isSubmitting}
           className={`px-5 py-2 border border-white rounded-[9.7px] sm:ml-10 transition-all ${
-            selectedFile
+            selectedFile && !isSubmitting
               ? "bg-[#1f2a44] text-white hover:bg-[#1b243b] cursor-pointer"
               : "bg-gray-400 text-gray-200 cursor-not-allowed"
           }`}
         >
-          SUBMIT
+          {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
         </button>
       </div>
 
