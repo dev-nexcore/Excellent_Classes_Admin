@@ -3,12 +3,12 @@
 import React from "react";
 import axios from "axios";
 
-function CountUp({
+const CountUp = ({
   value,
   durationMs = 1200,
   start = 0,
   format = (n) => n.toString(),
-}) {
+}) => {
   const [display, setDisplay] = React.useState(start);
 
   React.useEffect(() => {
@@ -42,9 +42,9 @@ function CountUp({
   }, [value, durationMs, start]);
 
   return <span aria-live="polite">{format(display)}</span>;
-}
+};
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [recentActivities, setRecentActivities] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -57,14 +57,33 @@ export default function Dashboard() {
   });
 
   React.useEffect(() => {
+    // Get the token once and reuse it
+    const token = localStorage.getItem("token");
+
+    // Check if token exists
+    if (!token) {
+      setError("Authentication token not found. Please log in.");
+      setLoading(false);
+      return;
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
     // Fetch Stats
     const fetchStats = async () => {
       try {
         const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
-          axios.get("http://localhost:5001/api/admin/media/images"),
-          axios.get("http://localhost:5001/api/admin/media/videos"),
-          axios.get("http://localhost:5001/api/admin/blogs"),
-          axios.get("http://localhost:5001/api/admin/notices"),
+          axios.get("http://localhost:5001/api/admin/media/images", {
+            headers,
+          }),
+          axios.get("http://localhost:5001/api/admin/media/videos", {
+            headers,
+          }),
+          axios.get("http://localhost:5001/api/admin/blogs", { headers }),
+          axios.get("http://localhost:5001/api/admin/notices", { headers }),
         ]);
 
         setStats({
@@ -75,6 +94,9 @@ export default function Dashboard() {
         });
       } catch (err) {
         console.error("Failed to fetch one or more stats", err);
+        setError(
+          "Failed to fetch statistics. Please check your authentication."
+        );
       }
     };
 
@@ -83,12 +105,7 @@ export default function Dashboard() {
       try {
         const res = await axios.get(
           "http://localhost:5001/api/admin/activities",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+          { headers }
         );
 
         if (Array.isArray(res.data)) {
@@ -106,8 +123,12 @@ export default function Dashboard() {
       }
     };
 
-    fetchStats();
-    fetchActivities();
+    // Execute both fetch functions
+    const fetchData = async () => {
+      await Promise.all([fetchStats(), fetchActivities()]);
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -128,7 +149,7 @@ export default function Dashboard() {
           ].map((item, index) => (
             <div
               key={index}
-              className="bg-[#E85222] text-white rounded-md py-6 w-[180px] sm:w-[220px] md:w-[240px] lg:w-[240px] text-center shadow-[0px_4px_4px_0px_#00000040]"
+              className="bg-[#E85222] text-white rounded-lg py-6 w-[180px] sm:w-[220px] md:w-[240px] lg:w-[240px] text-center shadow-[0px_4px_4px_0px_#00000040]"
             >
               <div className="text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] font-medium">
                 <CountUp value={item.count} />
@@ -236,4 +257,6 @@ export default function Dashboard() {
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;

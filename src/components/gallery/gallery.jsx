@@ -54,7 +54,7 @@ export default function Page() {
     try {
       const formData = new FormData();
       formData.append("image", selectedFile);
-
+  
       const response = await fetch(`${API_BASE_URL}/images`, {
         method: "POST",
         headers: {
