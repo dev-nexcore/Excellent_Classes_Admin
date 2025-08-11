@@ -41,7 +41,7 @@ const Login = () => {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5001/api/admin/auth/login', { email, password }); // ✅ Ensure correct route
+      const res = await axios.post('http://localhost:5001/api/admin/auth/login', { email, password });
       const { token } = res.data;
 
       // Store token locally (could be cookie instead)
@@ -103,7 +103,7 @@ const Login = () => {
             </div>
             {/* Tagline */}
             <p
-              className={`text-[#E85222] text-2xl text-center mt-4 transition-all duration-700 delay-700 ease-out ${
+              className={`text-white text-2xl text-center mt-4 transition-all duration-700 delay-700 ease-out ${
                 mounted
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
@@ -183,7 +183,7 @@ const Login = () => {
                 <div className="text-right mt-2">
                   <a
                     href="/forgetpassword"
-                    className="text-[#E85222] text-base font-medium hover:underline transition-colors duration-200"
+                    className="text-[#fffff] text-base font-medium hover:underline transition-colors duration-200"
                   >
                     {"Forgot Password ?"}
                   </a>
@@ -327,7 +327,7 @@ const Login = () => {
                     href="/forgetpassword"
                     className="text-xs xs:text-sm font-semibold hover:underline transition-colors duration-200"
                     style={{
-                      color: "#E85222",
+                      color: "#fffff",
                       fontFamily: "Times New Roman, serif",
                       fontWeight: "600",
                     }}
@@ -370,7 +370,7 @@ const Login = () => {
             mounted ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
           }`}
         >
-          <p className="text-[#E85222] text-sm xs:text-base sm:text-lg font-semibold text-center leading-relaxed">
+          <p className="text-white text-sm xs:text-base sm:text-lg font-semibold text-center leading-relaxed">
             {"Please Login to manage the website."}
           </p>
         </div>
