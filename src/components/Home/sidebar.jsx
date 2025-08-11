@@ -19,13 +19,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   }, []);
 
   const navItems = [
-    { label: "Dashboard", icon: "/images/dashboard.png", href: "/dashboard" },
-    { label: "Gallery", icon: "/images/gallery.png", href: "/gallery" },
-    { label: "Video Gallery", icon: "/images/videogallery.png", href: "/videogallery" },
-    { label: "Notice board", icon: "/images/noticeboard.png", href: "/notice-board" },
-    { label: "Blogs", icon: "/images/blogs.png", href: "/blogs" },
-    { label: "Topper List", icon: "/images/topperlist.png", href: "/topper-list" },
-    { label: "Logout", icon: "/images/logout.png", href: null},
+    { label: "Dashboard", icon: "/images/dashboard.png", activeIcon: "/images/dashboardactive.png", href: "/dashboard" },
+    { label: "Gallery", icon: "/images/gallery.png", activeIcon: "/images/galleryactive.png", href: "/gallery" },
+    { label: "Video Gallery", icon: "/images/videogallery.png", activeIcon: "/images/videogalleryactive.png", href: "/videogallery" },
+    { label: "Notice board", icon: "/images/noticeboard.png", activeIcon: "/images/noticeboardactive.png", href: "/notice-board" },
+    { label: "Blogs", icon: "/images/blogs.png", activeIcon: "/images/blogsactive.png", href: "/blogs" },
+    { label: "Topper List", icon: "/images/topperlist.png", activeIcon: "/images/topperlistactive.png", href: "/topper-list" },
+    { label: "Logout", icon: "/images/logout.png", href: null },
   ];
 
   const handleLogout = () => {
@@ -41,7 +41,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const getLinkClass = (href, label) => {
-    // Ensure consistent rendering during hydration
     if (!mounted) {
       return "flex items-center gap-3 px-4 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer text-yellow-400";
     }
@@ -52,6 +51,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
         ? "bg-[#BAC7E5] text-[#1F2A44] rounded-lg ml-2 shadow-sm mb-1"
         : "text-yellow-400 hover:bg-white/20"
     }`;
+  };
+
+  const getIconSrc = (item) => {
+    if (!mounted) return item.icon;
+    return (active === item.label || pathname === item.href) ? item.activeIcon : item.icon;
   };
 
   return (
@@ -88,8 +92,12 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       setShowLogoutConfirm(true);
                     }}
                     suppressHydrationWarning={true}
-                  >
-                    <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
+                  ><Image 
+                      src={getIconSrc(item)} 
+                      alt={`${item.label} icon`} 
+                      width={14} 
+                      height={14} 
+                    />
                     <span>{item.label}</span>
                   </div>
                 ) : (
@@ -102,7 +110,12 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       }}
                       suppressHydrationWarning={true}
                     >
-                      <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
+                      <Image 
+                        src={getIconSrc(item)} 
+                        alt={`${item.label} icon`} 
+                        width={14} 
+                        height={14} 
+                      />
                       <span>{item.label}</span>
                     </div>
                   </Link>
@@ -131,7 +144,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 Confirm
               </button>
               <button 
-                onClick={() => setShowLogoutConfirm(false)}
+                onClick={() => {
+                  setShowLogoutConfirm(false)
+                  setActive('');
+                }}
                 className="border-2 cursor-pointer border-[#2B4C7E] text-[#2B4C7E] font-bold px-8 py-3 rounded-lg hover:bg-gray-100 hover:text-black transition-colors shadow-lg hover:shadow-xl"
               >
                 Cancel
