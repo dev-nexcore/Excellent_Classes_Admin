@@ -25,7 +25,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     { label: "Notice board", icon: "/images/noticeboard.png", activeIcon: "/images/noticeboardactive.png", href: "/notice-board" },
     { label: "Blogs", icon: "/images/blogs.png", activeIcon: "/images/blogsactive.png", href: "/blogs" },
     { label: "Topper List", icon: "/images/topperlist.png", activeIcon: "/images/topperlistactive.png", href: "/topper-list" },
-    { label: "Logout", icon: "/images/logout.png", href: null },
+    { label: "Logout", icon: "/images/logout.png", activeIcon: "/images/logout.png", href: null }, // Added activeIcon for Logout
   ];
 
   const handleLogout = () => {
@@ -54,8 +54,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const getIconSrc = (item) => {
-    if (!mounted) return item.icon;
-    return (active === item.label || pathname === item.href) ? item.activeIcon : item.icon;
+    if (!mounted || !item.icon) return null; // Return null instead of empty string
+    return (active === item.label || pathname === item.href) ? 
+      (item.activeIcon || item.icon) : 
+      item.icon;
   };
 
   return (
@@ -75,7 +77,14 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Logo */}
         <div className="flex justify-center items-center mb-12 mt-6">
-          <img src="/images/exlogo.png" alt="Logo" className="w-44 h-auto" />
+          {/* Changed img to Next.js Image component */}
+          <Image 
+            src="/images/exlogo.png" 
+            alt="Logo" 
+            width={176}  // 44 * 4 (since original was w-44)
+            height={80}  // Approximate maintaining aspect ratio
+            className="w-44 h-auto"
+          />
         </div>
 
         {/* Nav Items */}
@@ -92,16 +101,20 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       setShowLogoutConfirm(true);
                     }}
                     suppressHydrationWarning={true}
-                  ><Image 
-                      src={getIconSrc(item)} 
-                      alt={`${item.label} icon`} 
-                      width={14} 
-                      height={14} 
-                    />
+                  >
+                    {getIconSrc(item) && (
+                      <Image 
+                        src={getIconSrc(item)}
+                        alt={`${item.label} icon`}
+                        width={14}
+                        height={14}
+                        style={{ width: 'auto', height: 'auto' }} // Fix aspect ratio warning
+                      />
+                    )}
                     <span>{item.label}</span>
                   </div>
                 ) : (
-                  <Link href={item.href}>
+                  <Link href={item.href} passHref>
                     <div
                       className={getLinkClass(item.href, item.label)}
                       onClick={() => {
@@ -110,12 +123,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       }}
                       suppressHydrationWarning={true}
                     >
-                      <Image 
-                        src={getIconSrc(item)} 
-                        alt={`${item.label} icon`} 
-                        width={14} 
-                        height={14} 
-                      />
+                      {getIconSrc(item) && (
+                        <Image 
+                          src={getIconSrc(item)}
+                          alt={`${item.label} icon`}
+                          width={14}
+                          height={14}
+                          style={{ width: 'auto', height: 'auto' }} // Fix aspect ratio warning
+                        />
+                      )}
                       <span>{item.label}</span>
                     </div>
                   </Link>
@@ -145,8 +161,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
               </button>
               <button 
                 onClick={() => {
-                  setShowLogoutConfirm(false)
-                  setActive('');
+                  setShowLogoutConfirm(false);
+                  setActive(''); // Reset active state when canceling
                 }}
                 className="border-2 cursor-pointer border-[#2B4C7E] text-[#2B4C7E] font-bold px-8 py-3 rounded-lg hover:bg-gray-100 hover:text-black transition-colors shadow-lg hover:shadow-xl"
               >
