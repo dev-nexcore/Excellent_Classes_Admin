@@ -44,11 +44,10 @@ const CountUp = ({
   return <span aria-live="polite">{format(display)}</span>;
 };
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [recentActivities, setRecentActivities] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
-
   const [stats, setStats] = React.useState({
     images: 0,
     videos: 0,
@@ -57,10 +56,9 @@ const Dashboard = () => {
   });
 
   React.useEffect(() => {
-    // Get the token once and reuse it
-    const token = localStorage.getItem("token");
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-    // Check if token exists
     if (!token) {
       setError("Authentication token not found. Please log in.");
       setLoading(false);
@@ -72,7 +70,6 @@ const Dashboard = () => {
       Authorization: `Bearer ${token}`,
     };
 
-    // Fetch Stats
     const fetchStats = async () => {
       try {
         const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
@@ -87,10 +84,10 @@ const Dashboard = () => {
         ]);
 
         setStats({
-          images: imageRes.data.length,
-          videos: videoRes.data.length,
-          blogs: blogRes.data.length,
-          notices: noticeRes.data.length,
+          images: Array.isArray(imageRes.data) ? imageRes.data.length : 0,
+          videos: Array.isArray(videoRes.data) ? videoRes.data.length : 0,
+          blogs: Array.isArray(blogRes.data) ? blogRes.data.length : 0,
+          notices: Array.isArray(noticeRes.data) ? noticeRes.data.length : 0,
         });
       } catch (err) {
         console.error("Failed to fetch one or more stats", err);
@@ -100,17 +97,15 @@ const Dashboard = () => {
       }
     };
 
-    // Fetch Recent Activities
     const fetchActivities = async () => {
       try {
         const res = await axios.get(
           "http://localhost:5001/api/admin/activities",
           { headers }
         );
-
         if (Array.isArray(res.data)) {
           setRecentActivities(res.data);
-        } else if (Array.isArray(res.data.activities)) {
+        } else if (Array.isArray(res.data?.activities)) {
           setRecentActivities(res.data.activities);
         } else {
           setRecentActivities([]);
@@ -123,11 +118,9 @@ const Dashboard = () => {
       }
     };
 
-    // Execute both fetch functions
     const fetchData = async () => {
       await Promise.all([fetchStats(), fetchActivities()]);
     };
-
     fetchData();
   }, []);
 
@@ -200,14 +193,19 @@ const Dashboard = () => {
                         {activity.section}
                       </td>
                       <td className="px-1 py-2">
-                        {new Date(activity.dateTime).toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
+                        {activity.dateTime
+                          ? new Date(activity.dateTime).toLocaleString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              }
+                            )
+                          : ""}
                       </td>
                     </tr>
                   ))}
@@ -220,28 +218,37 @@ const Dashboard = () => {
               {recentActivities.map((activity, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-lg shadow-md border border-gray-200 p-4"
+                  className="bg-white rounded-lg shadow-md border border-gray-200 p-4 w-full max-w-full"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {activity.user.charAt(0).toUpperCase()}
+                  <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <div
+                        aria-hidden="true"
+                        className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                        title={activity.user}
+                      >
+                        {(activity.user || "").charAt(0).toUpperCase()}
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-semibold text-[#1F2A44]">
+                      <div className="ml-3 min-w-0">
+                        <p
+                          className="text-sm font-semibold text-[#1F2A44] truncate"
+                          title={activity.user}
+                        >
                           {activity.user}
                         </p>
                       </div>
                     </div>
-                    <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium">
+                    <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium shrink-0">
                       {activity.section}
                     </span>
                   </div>
+
                   <div className="mb-3">
-                    <p className="text-gray-800 font-medium">
+                    <p className="text-gray-800 font-medium break-words">
                       {activity.action}
                     </p>
                   </div>
+
                   <div className="border-t border-gray-200 pt-2">
                     <p className="text-xs text-gray-500">
                       {activity.dateTime
@@ -257,6 +264,4 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
