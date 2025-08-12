@@ -23,6 +23,10 @@ const seeded = [
 ];
 
 // Ready for axios later; for now, return the in-memory seed to preserve behavior.
+export async function createNotice(_payload) {
+  const { data } = await api.post("/notices", _payload);
+  return data;
+}
 
 export async function addNotice(_payload) {
   const { data } = await api.post("/notices", _payload);
@@ -42,44 +46,3 @@ export async function deleteNotice(_id) {
   await api.delete(`/notices/${_id}`);
   return { ok: true };
 }
-
-// // Ready for axios later; for now, return the in-memory seed to preserve behavior.
-// export async function fetchNotices() {
-//   try {
-//     const { data } = await api.get("/notices")
-//     return Array.isArray(data) ? data : []
-//   } catch (err) {
-//     console.warn("fetchNotices: falling back to seeded data", err)
-//     return seeded.map((n) => ({ ...n }))
-//   }
-// }
-
-// export async function addNotice(payload) {
-//   try {
-//     const { data } = await api.post("/notices", payload)
-//     return data
-//   } catch (err) {
-//     console.warn("addNotice: request failed", err)
-//     return { ok: false, error: "Request failed (using placeholder)" }
-//   }
-// }
-
-// export async function updateNotice(id, payload) {
-//   try {
-//     const { data } = await api.put(`/notices/${encodeURIComponent(id)}`, payload)
-//     return data
-//   } catch (err) {
-//     console.warn("updateNotice: request failed", err)
-//     return { ok: false, error: "Request failed (using placeholder)" }
-//   }
-// }
-
-// export async function deleteNotice(id) {
-//   try {
-//     const { data } = await api.delete(`/notices/${encodeURIComponent(id)}`)
-//     return data
-//   } catch (err) {
-//     console.warn("deleteNotice: request failed", err)
-//     return { ok: false, error: "Request failed (using placeholder)" }
-//   }
-// }

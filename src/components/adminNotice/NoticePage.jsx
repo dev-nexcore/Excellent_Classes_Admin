@@ -2,7 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 
-import { deleteNotice, fetchNotices, updateNotice } from "@/services/notices";
+import {
+  createNotice,
+  deleteNotice,
+  fetchNotices,
+  updateNotice,
+} from "@/services/notices";
 import EditActivity from "./EditActivity";
 
 // Display date like: 19 June 2025
@@ -66,29 +71,37 @@ export default function NoticePage() {
     load();
   }, []);
 
+  useEffect(() => {
+    setTimeout(() => {
+      setError("");
+      setSuccess("");
+    }, 4000);
+  }, [error, success]);
+
   const handleSubmit = async () => {
     setError("");
     setSuccess("");
+
     if (!noticeText.trim()) {
       setError("Notice text cannot be empty.");
       return;
     }
+
     setSubmitting(true);
     try {
       const newNotice = {
-        user: "admin@domain.com",
-        description: `Added a new notice:\n"${noticeText}"`,
+        description: noticeText,
         date: new Date().toISOString(),
       };
-      // Preserve behavior: log and alert, do not add to list.
-      // (You can wire this to a POST endpoint later.)
-      // eslint-disable-next-line no-console
-      console.log("Submitted Notice:", newNotice);
-      alert("Notice submitted: " + noticeText);
+
+      await createNotice(newNotice); // ✅ API call to backend
+
       setNoticeText("");
       setSuccess("Notice submitted successfully.");
+
+      // Refresh list
+      await load();
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error(err);
       setError("Failed to submit notice.");
     } finally {
@@ -250,19 +263,26 @@ export default function NoticePage() {
                 </tr>
               </thead>
 
-              <tbody className="bg-[#BAC7E5] text-black text-center align-top text-xs md:text-sm">
+              <tbody className="bg-[#BAC7E5] text-black text-center align-top text-xs sm:text-sm md:text-base">
                 {rows.map(({ n, i, key }) => (
                   <tr key={key}>
-                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium break-words">
+                    {/* User column - no wrapping */}
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                       {n.user}
                     </td>
-                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium whitespace-pre-line break-words">
+
+                    {/* Description column - allow wrapping only here */}
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium whitespace-pre-line">
                       {n.description}
                     </td>
-                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium">
+
+                    {/* Date column - no wrapping */}
+                    <td className="px-2 md:px-4 py-2 md:py-3 border-r border-black font-medium whitespace-nowrap">
                       {formatDate(n.date)}
                     </td>
-                    <td className="px-2 md:px-4 py-2 md:py-3 space-x-1 md:space-x-2">
+
+                    {/* Action column - no wrapping */}
+                    <td className="px-2 md:px-4 py-2 md:py-3 space-x-1 md:space-x-2 whitespace-nowrap">
                       <button
                         type="button"
                         className="text-green-600 cursor-pointer hover:underline"
@@ -283,13 +303,6 @@ export default function NoticePage() {
                     </td>
                   </tr>
                 ))}
-                {rows.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-4 text-gray-600">
-                      {"No notices found."}
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
