@@ -388,7 +388,7 @@ const AddBlogPage = () => {
                       <span style={{ color: "#FFD700" }}>|</span>
                       <span
                         className="text-red-400 cursor-pointer ml-2 hover:text-red-300"
-                        onClick={() => handleDelete(blog.id)}
+                        onClick={() => handleDelete(blog._id)}
                       >
                         Delete
                       </span>

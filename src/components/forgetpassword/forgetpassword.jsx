@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -16,22 +17,31 @@ const ForgotPassword = () => {
     setMounted(true);
   }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMsg("");
-    setSuccessMsg("");
 
-    // Simulate success after 1 second (demo purpose only)
-    setTimeout(() => {
-      if (email.includes("@")) {
-        setSuccessMsg("OTP has been sent to your email (simulated)");
-      } else {
-        setErrorMsg("Please enter a valid email address.");
-      }
-      setLoading(false);
-    }, 1000);
-  };
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setErrorMsg("");
+  setSuccessMsg("");
+
+  try {
+    const res = await axios.post("http://localhost:5001/api/admin/auth/send-otp", {
+      email,
+    });
+
+    setSuccessMsg(res.data.message); // "OTP sent to email"
+  } catch (error) {
+    if (error.response) {
+      setErrorMsg(error.response.data.message || "Failed to send OTP");
+    } else {
+      setErrorMsg("Server not reachable. Please try again later.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="h-screen w-screen bg-[#233B77]">

@@ -33,6 +33,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
     sessionStorage.clear();
     setShowLogoutConfirm(false);
     setShowLoggedOut(true);
+    router.push("/");
   };
 
   const handleLoginAgain = () => {
