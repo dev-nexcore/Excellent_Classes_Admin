@@ -33,7 +33,7 @@ const ForgotPassword = () => {
     setSuccessMsg("")
 
     try {
-      const res = await axios.post("http://localhost:5001/api/admin/auth/send-otp", { email })
+      const res = await axios.post("https://excellent-api.code4bharat.com/api/admin/auth/send-otp", { email })
       setSuccessMsg(res.data.message)
       setCurrentStep(2)
     } catch (error) {
@@ -51,7 +51,7 @@ const ForgotPassword = () => {
     setSuccessMsg("")
 
     try {
-      const res = await axios.post("http://localhost:5001/api/admin/auth/verify-otp", { email, otp })
+      const res = await axios.post("https://excellent-api.code4bharat.com/api/admin/auth/verify-otp", { email, otp })
       setSuccessMsg(res.data.message)
       setCurrentStep(3)
     } catch (error) {
@@ -75,7 +75,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5001/api/admin/auth/reset-password", { email, otp, newPassword })
+      const res = await axios.post("https://excellent-api.code4bharat.com/api/admin/auth/reset-password", { email, otp, newPassword })
       setSuccessMsg(res.data.message)
       setCurrentStep(1)
       setEmail("")

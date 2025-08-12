@@ -73,14 +73,14 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
-          axios.get("http://localhost:5001/api/admin/media/images", {
+          axios.get("https://excellent-api.code4bharat.com/api/admin/media/images", {
             headers,
           }),
-          axios.get("http://localhost:5001/api/admin/media/videos", {
+          axios.get("https://excellent-api.code4bharat.com/api/admin/media/videos", {
             headers,
           }),
-          axios.get("http://localhost:5001/api/admin/blogs", { headers }),
-          axios.get("http://localhost:5001/api/admin/notices", { headers }),
+          axios.get("https://excellent-api.code4bharat.com/api/admin/blogs", { headers }),
+          axios.get("https://excellent-api.code4bharat.com/api/admin/notices", { headers }),
         ]);
 
         setStats({
@@ -100,7 +100,7 @@ export default function Dashboard() {
     const fetchActivities = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5001/api/admin/activities",
+          "https://excellent-api.code4bharat.com/api/admin/activities",
           { headers }
         );
         if (Array.isArray(res.data)) {

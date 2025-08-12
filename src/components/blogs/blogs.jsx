@@ -32,7 +32,7 @@ const AddBlogPage = () => {
    const fetchBlogs = async () => {
      try {
        const response = await axios.get(
-         "http://localhost:5001/api/admin/blogs",
+         "https://excellent-api.code4bharat.com/api/admin/blogs",
          {
            headers: {
              Authorization: `Bearer ${token}`,
@@ -147,7 +147,7 @@ const AddBlogPage = () => {
       if (editingId) {
         // UPDATE
         const res = await axios.put(
-          `http://localhost:5001/api/admin/blogs/${editingId}`,
+          `https://excellent-api.code4bharat.com/api/admin/blogs/${editingId}`,
           formData,
           {
             headers: {
@@ -164,7 +164,7 @@ const AddBlogPage = () => {
       } else {
         // CREATE
         const response = await axios.post(
-          "http://localhost:5001/api/admin/blogs",
+          "https://excellent-api.code4bharat.com/api/admin/blogs",
           formData,
           {
             headers: {
@@ -209,7 +209,7 @@ const AddBlogPage = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await axios.delete(`http://localhost:5001/api/admin/blogs/${id}`, {
+      const res = await axios.delete(`https://excellent-api.code4bharat.com/api/admin/blogs/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

@@ -11,7 +11,7 @@ function VideoGallery() {
     const fetchVideos = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5001/api/admin/media/videos"
+          "https://excellent-api.code4bharat.com/api/admin/media/videos"
         );
         setVideos(res.data);
       } catch (err) {
@@ -35,7 +35,7 @@ function VideoGallery() {
         formData.append("video", selectedFile);
 
         const res = await axios.post(
-          "http://localhost:5001/api/admin/media/videos",
+          "https://excellent-api.code4bharat.com/api/admin/media/videos",
           formData,
           {
             headers: {
@@ -58,7 +58,7 @@ function VideoGallery() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5001/api/admin/media/videos/${id}`, {
+      await axios.delete(`https://excellent-api.code4bharat.com/api/admin/media/videos/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

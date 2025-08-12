@@ -41,7 +41,7 @@ const Login = () => {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5001/api/admin/auth/login', { email, password });
+      const res = await axios.post('https://excellent-api.code4bharat.com/api/admin/auth/login', { email, password });
       const { token } = res.data;
 
       // Store token locally (could be cookie instead)

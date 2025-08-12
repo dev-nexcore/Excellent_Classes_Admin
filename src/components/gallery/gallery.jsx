@@ -8,7 +8,7 @@ export default function Page() {
   const [selectedFileName, setSelectedFileName] = useState("No File chosen");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const API_BASE_URL = "http://localhost:5001/api/admin/media";
+  const API_BASE_URL = "https://excellent-api.code4bharat.com/api/admin/media";
 
   const handleDelete = async (id) => {
     if (!id) return;
