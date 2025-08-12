@@ -13,7 +13,7 @@ const Login = () => {
   const router = useRouter();
 
   // Mount animation for mobile layout
-  useEffect(() => {
+  useEffect(() => {                                         
     setMounted(true);
   }, []);
 
