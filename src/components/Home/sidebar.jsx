@@ -19,13 +19,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   }, []);
 
   const navItems = [
-    { label: "Dashboard", icon: "/images/dashboard.png", href: "/dashboard" },
-    { label: "Gallery", icon: "/images/gallery.png", href: "/gallery" },
-    { label: "Video Gallery", icon: "/images/videogallery.png", href: "/videogallery" },
-    { label: "Notice board", icon: "/images/noticeboard.png", href: "/notice-board" },
-    { label: "Blogs", icon: "/images/blogs.png", href: "/blogs" },
-    { label: "Topper List", icon: "/images/topperlist.png", href: "/topper-list" },
-    { label: "Logout", icon: "/images/logout.png", href: null},
+    { label: "Dashboard", icon: "/images/dashboard.png", activeIcon: "/images/dashboardactive.png", href: "/dashboard" },
+    { label: "Gallery", icon: "/images/gallery.png", activeIcon: "/images/galleryactive.png", href: "/gallery" },
+    { label: "Video Gallery", icon: "/images/videogallery.png", activeIcon: "/images/videogalleryactive.png", href: "/videogallery" },
+    { label: "Notice board", icon: "/images/noticeboard.png", activeIcon: "/images/noticeboardactive.png", href: "/notice-board" },
+    { label: "Blogs", icon: "/images/blogs.png", activeIcon: "/images/blogsactive.png", href: "/blogs" },
+    { label: "Topper List", icon: "/images/topperlist.png", activeIcon: "/images/topperlistactive.png", href: "/topper-list" },
+    { label: "Logout", icon: "/images/logout.png", activeIcon: "/images/logout.png", href: null }, // Added activeIcon for Logout
   ];
 
   const handleLogout = () => {
@@ -42,7 +42,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   };
 
   const getLinkClass = (href, label) => {
-    // Ensure consistent rendering during hydration
     if (!mounted) {
       return "flex items-center gap-3 px-4 py-2 transition-all duration-200 text-sm font-semibold cursor-pointer text-yellow-400";
     }
@@ -53,6 +52,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
         ? "bg-[#BAC7E5] text-[#1F2A44] rounded-lg ml-2 shadow-sm mb-1"
         : "text-yellow-400 hover:bg-white/20"
     }`;
+  };
+
+  const getIconSrc = (item) => {
+    if (!mounted || !item.icon) return null; // Return null instead of empty string
+    return (active === item.label || pathname === item.href) ? 
+      (item.activeIcon || item.icon) : 
+      item.icon;
   };
 
   return (
@@ -72,7 +78,14 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Logo */}
         <div className="flex justify-center items-center mb-12 mt-6">
-          <img src="/images/exlogo.png" alt="Logo" className="w-44 h-auto" />
+          {/* Changed img to Next.js Image component */}
+          <Image 
+            src="/images/exlogo.png" 
+            alt="Logo" 
+            width={176}  // 44 * 4 (since original was w-44)
+            height={80}  // Approximate maintaining aspect ratio
+            className="w-44 h-auto"
+          />
         </div>
 
         {/* Nav Items */}
@@ -90,11 +103,19 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                     }}
                     suppressHydrationWarning={true}
                   >
-                    <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
+                    {getIconSrc(item) && (
+                      <Image 
+                        src={getIconSrc(item)}
+                        alt={`${item.label} icon`}
+                        width={14}
+                        height={14}
+                        style={{ width: 'auto', height: 'auto' }} // Fix aspect ratio warning
+                      />
+                    )}
                     <span>{item.label}</span>
                   </div>
                 ) : (
-                  <Link href={item.href}>
+                  <Link href={item.href} passHref>
                     <div
                       className={getLinkClass(item.href, item.label)}
                       onClick={() => {
@@ -103,7 +124,15 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                       }}
                       suppressHydrationWarning={true}
                     >
-                      <Image src={item.icon} alt={`${item.label} icon`} width={14} height={14} />
+                      {getIconSrc(item) && (
+                        <Image 
+                          src={getIconSrc(item)}
+                          alt={`${item.label} icon`}
+                          width={14}
+                          height={14}
+                          style={{ width: 'auto', height: 'auto' }} // Fix aspect ratio warning
+                        />
+                      )}
                       <span>{item.label}</span>
                     </div>
                   </Link>
@@ -132,7 +161,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
                 Confirm
               </button>
               <button 
-                onClick={() => setShowLogoutConfirm(false)}
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  setActive(''); // Reset active state when canceling
+                }}
                 className="border-2 cursor-pointer border-[#2B4C7E] text-[#2B4C7E] font-bold px-8 py-3 rounded-lg hover:bg-gray-100 hover:text-black transition-colors shadow-lg hover:shadow-xl"
               >
                 Cancel

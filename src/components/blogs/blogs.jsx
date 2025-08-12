@@ -17,25 +17,39 @@ const AddBlogPage = () => {
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const [lightboxAlt, setLightboxAlt] = useState("");
 
-  const token = localStorage.getItem("token");
+ const [token, setToken] = useState(null);
+
+ useEffect(() => {
+   const storedToken = localStorage.getItem("token");
+   setToken(storedToken);
+ }, []);
+
 
   // 🟢 Fetch blogs on mount
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const response = await axios.get("http://localhost:5001/api/admin/blogs", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setBlogs(response.data);
-      } catch (error) {
-        console.error("Failed to fetch blogs:", error?.response?.data || error.message);
-      }
-    };
+ useEffect(() => {
+   if (!token) return; // Wait until token is available
 
-    fetchBlogs();
-  }, []);
+   const fetchBlogs = async () => {
+     try {
+       const response = await axios.get(
+         "http://localhost:5001/api/admin/blogs",
+         {
+           headers: {
+             Authorization: `Bearer ${token}`,
+           },
+         }
+       );
+       setBlogs(response.data);
+     } catch (error) {
+       console.error(
+         "Failed to fetch blogs:",
+         error?.response?.data || error.message
+       );
+     }
+   };
+
+   fetchBlogs();
+ }, [token]);
 
   const openLightbox = (src, alt) => {
     setLightboxSrc(src);
@@ -117,7 +131,7 @@ const AddBlogPage = () => {
 
     if (!title || !date || !content) {
       alert("Please fill in all required fields");
-      return;
+      return; 
     }
 
     const formData = new FormData();
@@ -179,7 +193,7 @@ const AddBlogPage = () => {
       alert("Error saving blog.");
     }
   };
-
+ 
   const handleEdit = (blog) => {
     setTitle(blog.title);
     setDate(blog.date);
@@ -360,9 +374,9 @@ const AddBlogPage = () => {
           </div>
         </form>
 
-        <div className="mt-6 sm:mt-8 md:mt-10">
-          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F2A44] text-center mb-4">
-            {`Latest Blogs (${blogs.length})`}
+        <div className="mt-6 sm:mt-8 md:mt-10 ">
+          <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#1F2A44] text-center mb-4 mr-8">
+            Latest Blogs
           </h3>
 
           <div className="max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto md:mx-auto lg:ml-6 xl:ml-10 lg:mx-0">
@@ -374,8 +388,9 @@ const AddBlogPage = () => {
               </div>
             ) : (
               <div className="bg-[#1F2A44] text-white p-3 sm:p-4 md:p-6 w-full md:w-full lg:w-[900px] xl:w-[1000px] mt-4 space-y-8 sm:space-y-10 md:space-y-12">
-                {blogs.map((blog,index) => (
-                  <div key={blog._id || blog.id || index}
+                {blogs.map((blog, index) => (
+                  <div
+                    key={blog._id || blog.id || index}
                     className="border-b border-gray-600 pb-6 sm:pb-8 last:border-b-0"
                   >
                     <div className="flex justify-start text-xs sm:text-sm mb-3 sm:mb-4">
@@ -467,7 +482,7 @@ const AddBlogPage = () => {
           </div>
         </div>
       )}
-    </>
+    </> 
   );
 };
 

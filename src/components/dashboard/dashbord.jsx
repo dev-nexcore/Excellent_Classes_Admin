@@ -3,12 +3,12 @@
 import React from "react";
 import axios from "axios";
 
-function CountUp({
+const CountUp = ({
   value,
   durationMs = 1200,
   start = 0,
   format = (n) => n.toString(),
-}) {
+}) => {
   const [display, setDisplay] = React.useState(start);
 
   React.useEffect(() => {
@@ -42,13 +42,12 @@ function CountUp({
   }, [value, durationMs, start]);
 
   return <span aria-live="polite">{format(display)}</span>;
-}
+};
 
 export default function Dashboard() {
   const [recentActivities, setRecentActivities] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
-
   const [stats, setStats] = React.useState({
     images: 0,
     videos: 0,
@@ -57,43 +56,56 @@ export default function Dashboard() {
   });
 
   React.useEffect(() => {
-    // Fetch Stats
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+    if (!token) {
+      setError("Authentication token not found. Please log in.");
+      setLoading(false);
+      return;
+    }
+
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
     const fetchStats = async () => {
       try {
         const [imageRes, videoRes, blogRes, noticeRes] = await Promise.all([
-          axios.get("http://localhost:5001/api/admin/media/images"),
-          axios.get("http://localhost:5001/api/admin/media/videos"),
-          axios.get("http://localhost:5001/api/admin/blogs"),
-          axios.get("http://localhost:5001/api/admin/notices"),
+          axios.get("http://localhost:5001/api/admin/media/images", {
+            headers,
+          }),
+          axios.get("http://localhost:5001/api/admin/media/videos", {
+            headers,
+          }),
+          axios.get("http://localhost:5001/api/admin/blogs", { headers }),
+          axios.get("http://localhost:5001/api/admin/notices", { headers }),
         ]);
 
         setStats({
-          images: imageRes.data.length,
-          videos: videoRes.data.length,
-          blogs: blogRes.data.length,
-          notices: noticeRes.data.length,
+          images: Array.isArray(imageRes.data) ? imageRes.data.length : 0,
+          videos: Array.isArray(videoRes.data) ? videoRes.data.length : 0,
+          blogs: Array.isArray(blogRes.data) ? blogRes.data.length : 0,
+          notices: Array.isArray(noticeRes.data) ? noticeRes.data.length : 0,
         });
       } catch (err) {
         console.error("Failed to fetch one or more stats", err);
+        setError(
+          "Failed to fetch statistics. Please check your authentication."
+        );
       }
     };
 
-    // Fetch Recent Activities
     const fetchActivities = async () => {
       try {
         const res = await axios.get(
           "http://localhost:5001/api/admin/activities",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+          { headers }
         );
-
         if (Array.isArray(res.data)) {
           setRecentActivities(res.data);
-        } else if (Array.isArray(res.data.activities)) {
+        } else if (Array.isArray(res.data?.activities)) {
           setRecentActivities(res.data.activities);
         } else {
           setRecentActivities([]);
@@ -106,8 +118,10 @@ export default function Dashboard() {
       }
     };
 
-    fetchStats();
-    fetchActivities();
+    const fetchData = async () => {
+      await Promise.all([fetchStats(), fetchActivities()]);
+    };
+    fetchData();
   }, []);
 
   return (
@@ -128,7 +142,7 @@ export default function Dashboard() {
           ].map((item, index) => (
             <div
               key={index}
-              className="bg-[#E85222] text-white rounded-md py-6 w-[180px] sm:w-[220px] md:w-[240px] lg:w-[240px] text-center shadow-[0px_4px_4px_0px_#00000040]"
+              className="bg-[#E85222] text-white rounded-lg py-6 w-[180px] sm:w-[220px] md:w-[240px] lg:w-[240px] text-center shadow-[0px_4px_4px_0px_#00000040]"
             >
               <div className="text-[28px] sm:text-[36px] md:text-[44px] lg:text-[52px] font-medium">
                 <CountUp value={item.count} />
@@ -179,14 +193,19 @@ export default function Dashboard() {
                         {activity.section}
                       </td>
                       <td className="px-1 py-2">
-                        {new Date(activity.dateTime).toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
+                        {activity.dateTime
+                          ? new Date(activity.dateTime).toLocaleString(
+                              "en-GB",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              }
+                            )
+                          : ""}
                       </td>
                     </tr>
                   ))}
@@ -199,28 +218,37 @@ export default function Dashboard() {
               {recentActivities.map((activity, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-lg shadow-md border border-gray-200 p-4"
+                  className="bg-white rounded-lg shadow-md border border-gray-200 p-4 w-full max-w-full"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                        {activity.user.charAt(0).toUpperCase()}
+                  <div className="flex items-center justify-between gap-3 mb-3 min-w-0">
+                    <div className="flex items-center min-w-0 flex-1">
+                      <div
+                        aria-hidden="true"
+                        className="w-8 h-8 bg-[#E85222] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                        title={activity.user}
+                      >
+                        {(activity.user || "").charAt(0).toUpperCase()}
                       </div>
-                      <div className="ml-3">
-                        <p className="text-sm font-semibold text-[#1F2A44]">
+                      <div className="ml-3 min-w-0">
+                        <p
+                          className="text-sm font-semibold text-[#1F2A44] truncate"
+                          title={activity.user}
+                        >
                           {activity.user}
                         </p>
                       </div>
                     </div>
-                    <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium">
+                    <span className="bg-[#BAC7E5] text-[#1F2A44] px-2 py-1 rounded text-xs font-medium shrink-0">
                       {activity.section}
                     </span>
                   </div>
+
                   <div className="mb-3">
-                    <p className="text-gray-800 font-medium">
+                    <p className="text-gray-800 font-medium break-words">
                       {activity.action}
                     </p>
                   </div>
+
                   <div className="border-t border-gray-200 pt-2">
                     <p className="text-xs text-gray-500">
                       {activity.dateTime
