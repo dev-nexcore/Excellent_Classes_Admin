@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import {
-  createNotice,
+  addNotice,
   deleteNotice,
   fetchNotices,
   updateNotice,
@@ -56,8 +56,6 @@ export default function NoticePage() {
     setLoading(true);
     setError("");
     try {
-      console.log("Fetching notices...");
-
       const data = await fetchNotices();
       setNotices(data);
     } catch {
@@ -94,7 +92,7 @@ export default function NoticePage() {
         date: new Date().toISOString(),
       };
 
-      await createNotice(newNotice); // ✅ API call to backend
+      await addNotice(newNotice); // ✅ API call to backend
 
       setNoticeText("");
       setSuccess("Notice submitted successfully.");
