@@ -14,10 +14,12 @@ export default function AddTopper({ onAdd }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // ✅ Prevent percentage > 100
     if (name === "percentage") {
-      const num = Number(value);
-      if (num < 35 || num > 100) return; // block invalid numbers
+      // Allow empty string (when deleting) or partial typing
+      if (value === "" || Number(value) <= 100) {
+        setForm((prev) => ({ ...prev, [name]: value }));
+      }
+      return;
     }
 
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -108,10 +110,9 @@ export default function AddTopper({ onAdd }) {
             value={form.percentage}
             onChange={handleChange}
             placeholder="Enter percentage (35-100)"
+            className="w-full border border-gray-300 rounded-md p-2"
             min="35"
             max="100"
-            step="0.01"
-            className="w-full border border-gray-300 rounded-md p-2"
             required
           />
         </div>
