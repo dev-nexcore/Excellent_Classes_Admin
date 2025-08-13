@@ -37,19 +37,6 @@ export default function TopperListPage() {
   });
   const [editIndex, setEditIndex] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  // console.log("TopperData: ", topperData);
-
-  // Hydrate data (ready for axios later via services)
-  // useEffect(() => {
-  //   let active = true;
-  //   (async () => {
-  //     const data = await fetchToppers();
-  //     if (active) setTopperData(data);
-  //   })();
-  //   return () => {
-  //     active = false;
-  //   };
-  // }, []);
 
   const loadToppers = async () => {
     try {
