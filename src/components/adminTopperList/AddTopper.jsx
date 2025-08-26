@@ -9,6 +9,7 @@ export default function AddTopper({ onAdd }) {
     course: "",
     percentage: "",
     year: "",
+    category: "", 
   });
 
   const handleChange = (e) => {
@@ -49,6 +50,7 @@ export default function AddTopper({ onAdd }) {
       course: form.course.trim(),
       percentage: percentageValue,
       year: form.year.trim(),
+      category: form.category.trim(), 
     };
 
     onAdd(trimmedForm);
@@ -57,6 +59,8 @@ export default function AddTopper({ onAdd }) {
       course: "",
       percentage: "",
       year: "",
+       category: "",
+       
     });
   };
 
@@ -96,6 +100,25 @@ export default function AddTopper({ onAdd }) {
             className="w-full border border-gray-300 rounded-md p-2"
             required
           />
+        </div>
+          {/* Category Dropdown */}
+        <div>
+          <label htmlFor="add-category" className="block font-semibold mb-1">
+            Category
+          </label>
+          <select
+            id="add-category"
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-md p-2"
+            required
+          >
+            <option value="">-- Select Category --</option>
+            <option value="SSC">SSC</option>
+            <option value="HSC Science">HSC Science</option>
+            <option value="HSC Commerce">HSC Commerce</option>
+          </select>
         </div>
 
         {/* Percentage */}
