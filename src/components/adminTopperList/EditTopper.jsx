@@ -5,8 +5,8 @@ import PropTypes from "prop-types";
 
 export default function EditTopper({ data, onUpdate, onCancel }) {
   const [form, setForm] = useState({
-    name: data.studentName || "",
-    course: data.trade || "",
+    name: data.name || "",
+    course: data.course || "",
     percentage: data.percentage || null,
     year: data.year || "",
   });
@@ -21,8 +21,8 @@ export default function EditTopper({ data, onUpdate, onCancel }) {
     e.preventDefault();
     onUpdate({
       ...form,
-      studentName: form.name.trim(),
-      trade: form.course.trim(),
+      name: form.name.trim(),
+      course: form.course.trim(),
       percentage: Number(form.percentage),
       year: form.year.trim(),
     });

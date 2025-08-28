@@ -26,43 +26,36 @@ export default function AddTopper({ onAdd }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+const handleSubmit = (e) => {
+  e.preventDefault();
+  
+  const percentageValue = Number(form.percentage);
+  if (
+    !form.name.trim() ||
+    !form.course.trim() ||
+    !form.year.trim() ||
+    isNaN(percentageValue) ||
+    percentageValue < 0 ||
+    percentageValue > 100
+  ) {
+    alert("Please fill all fields correctly. Percentage must be between 0 and 100.");
+    return;
+  }
 
-    // Extra safety check for percentage
-    const percentageValue = Number(form.percentage);
-    if (
-      !form.name.trim() ||
-      !form.course.trim() ||
-      !form.year.trim() ||
-      isNaN(percentageValue) ||
-      percentageValue < 0 ||
-      percentageValue > 100
-    ) {
-      alert(
-        "Please fill all fields correctly. Percentage must be between 0 and 100."
-      );
-      return;
-    }
-
-    const trimmedForm = {
-      name: form.name.trim(),
-      course: form.course.trim(),
-      percentage: percentageValue,
-      year: form.year.trim(),
-      category: form.category.trim(), 
-    };
-
-    onAdd(trimmedForm);
-    setForm({
-      name: "",
-      course: "",
-      percentage: "",
-      year: "",
-       category: "",
-       
-    });
+  const trimmedForm = {
+    name: form.name.trim(),
+    course: form.course.trim(),
+    percentage: percentageValue,
+    year: form.year.trim(),
+    category: form.category.trim(),
   };
+
+  console.log("📌 Submitting topper:", trimmedForm); // <-- Debug line
+
+  onAdd(trimmedForm);
+  setForm({ name: "", course: "", percentage: "", year: "", category: "" });
+};
+
 
   return (
     <div className="p-6 text-[#1F2A44]">
@@ -101,10 +94,10 @@ export default function AddTopper({ onAdd }) {
             required
           />
         </div>
-          {/* Category Dropdown */}
+          {/* category Dropdown */}
         <div>
           <label htmlFor="add-category" className="block font-semibold mb-1">
-            Category
+            category
           </label>
           <select
             id="add-category"
@@ -114,7 +107,7 @@ export default function AddTopper({ onAdd }) {
             className="w-full border border-gray-300 rounded-md p-2"
             required
           >
-            <option value="">-- Select Category --</option>
+            <option value="">-- Select category --</option>
             <option value="SSC">SSC</option>
             <option value="HSC Science">HSC Science</option>
             <option value="HSC Commerce">HSC Commerce</option>

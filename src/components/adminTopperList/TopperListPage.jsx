@@ -83,8 +83,8 @@ export default function TopperListPage() {
 
       const payload = {
         _id: id,
-        studentName: updatedTopper.name.trim(),
-        trade: updatedTopper.course.trim(),
+        name: updatedTopper.name.trim(),
+        course: updatedTopper.course.trim(),
         percentage: Number(updatedTopper.percentage),
         year: updatedTopper.year.trim(),
       };
@@ -101,10 +101,11 @@ export default function TopperListPage() {
     try {
       // Call backend
       const savedTopper = await addTopper({
-        studentName: newTopper.name, // maps "name" → "studentName"
-        trade: newTopper.course, // maps "course" → "trade"
+        name: newTopper.name, // maps "name" → "name"
+        course: newTopper.course, // maps "course" → "course"
         percentage: Number(newTopper.percentage), // ensure it's a Number
         year: newTopper.year,
+         category: newTopper.category,
       });
 
       // // Update local state with the saved data from backend
@@ -196,10 +197,10 @@ export default function TopperListPage() {
                   className="border-t  border-black text-center"
                 >
                   <td className="px-4 py-3 border-r border-black font-medium">
-                    {item.studentName}
+                    {item.name}
                   </td>
                   <td className="px-4 py-3 border-r border-black font-medium">
-                    {item.trade}
+                    {item.course}
                   </td>
                   <td className="px-4 py-3 border-r border-black font-medium">
                     {item.percentage}%
@@ -243,11 +244,11 @@ export default function TopperListPage() {
               className="bg-white shadow-md rounded-lg p-4 border border-gray-300"
             >
               <p className="font-semibold text-[#1F2A44] text-lg mb-2">
-                {item.studentName}
+                {item.name}
               </p>
               <p className="text-[#1F2A44] font-semibold">
                 <span className="font-medium">Course/Section: </span>
-                {item.trade}
+                {item.course}
               </p>
               <p className="text-[#1F2A44] font-semibold">
                 <span className="font-medium">Percentage: </span>

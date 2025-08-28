@@ -19,6 +19,24 @@ const AddBlogPage = () => {
 
  const [token, setToken] = useState(null);
 
+
+ const [confetti, setConfetti] = useState([]);
+
+const celebrate = () => {
+  const pieces = [];
+  for (let i = 0; i < 40; i++) {
+    pieces.push({
+      id: i,
+      color: ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500'][Math.floor(Math.random() * 4)],
+      side: i < 20 ? 'left' : 'right',
+      bottom: Math.random() * 30,
+      size: 6 + Math.random() * 6,
+    });
+  }
+  setConfetti(pieces);
+  setTimeout(() => setConfetti([]), 3000);
+};
+
  useEffect(() => {
    const storedToken = localStorage.getItem("token");
    setToken(storedToken);
@@ -161,6 +179,7 @@ const AddBlogPage = () => {
           prev.map((b) => (b._id === updatedBlog._id ? updatedBlog : b))
         );
         alert("Blog updated successfully!");
+        celebrate();
       } else {
         // CREATE
         const response = await axios.post(
@@ -361,6 +380,7 @@ const AddBlogPage = () => {
               className="w-full sm:w-auto bg-[#1F2A44] text-white px-6 py-2 rounded-md hover:bg-[#162035] text-sm sm:text-base"
             >
               {editingId ? "UPDATE" : "SUBMIT"}
+          
             </button>
             {editingId && (
               <button
